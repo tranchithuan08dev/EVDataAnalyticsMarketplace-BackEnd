@@ -1,0 +1,41 @@
+﻿version: "3.9"
+services:
+  gatewayapi:
+    build:
+      context: .
+      dockerfile: ReverseProxy/Dockerfile
+    ports:
+      - "8000:8080"
+    networks:
+      - ev_network
+
+  adminservice:
+    build:
+      context: .
+      dockerfile: EV.AdminService.API/Dockerfile
+    ports:
+      - "8001:8080"
+    networks:
+      - ev_network
+
+  consumerservice:
+    build:
+      context: .
+      dockerfile: EV.DataConsumerService.API/Dockerfile
+    ports:
+      - "8002:8080"
+    networks:
+      - ev_network
+
+  providerservice:
+    build:
+      context: .
+      dockerfile: EV.DataProviderService.API/Dockerfile
+    ports:
+      - "8003:8080"
+    networks:
+      - ev_network
+
+networks:
+  ev_network:
+    driver: bridge
