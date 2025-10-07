@@ -36,6 +36,39 @@ services:
     networks:
       - ev_network
 
+# ========================================
+  # DỊCH VỤ GIÁM SÁT MỚI
+  # ========================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      # Gắn tệp cấu hình Prometheus (cần tạo: monitoring/prometheus.yml) SỬA
+      - D:/FPT_FALL25/PRN232/EVDataAnalyticsMarketplace-BackEnd/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090" # Cổng 9090 để truy cập Prometheus UI
+    networks:
+      - ev_network
+    restart: unless-stopped
+    depends_on:
+      - consumerservice # Đảm bảo service API chạy trước khi Prometheus thu thập
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000" # Cổng 3000 để truy cập Grafana UI
+    networks:
+      - ev_network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    volumes:
+      # Gắn thư mục provisioning để Grafana tự động cấu hình Data Source
+        - D:/FPT_FALL25/PRN232/EVDataAnalyticsMarketplace-BackEnd/datasources.yml:/etc/grafana/provisioning/datasources/datasource:ro
 networks:
   ev_network:
     driver: bridge
