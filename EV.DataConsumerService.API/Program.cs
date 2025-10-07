@@ -5,8 +5,8 @@ using EV.DataConsumerService.API.Service;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
-using Prometheus.Client.DependencyInjection;
-using Prometheus.Client.AspNetCore;
+using Prometheus;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,11 +37,17 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddMetricFactory();
+
+
 
 
 var app = builder.Build();
 
+// Middleware Prometheus
+app.UseMetricServer();   // expose /metrics
+app.UseHttpMetrics();    // track HTTP metrics automatically
+
+app.MapGet("/", () => "Hello Prometheus!");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
