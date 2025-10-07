@@ -1,0 +1,35 @@
+﻿# monitoring/prometheus.yml
+
+global:
+  # Thiết lập khoảng thời gian Prometheus sẽ thu thập dữ liệu (scrape)
+  scrape_interval: 15s 
+
+scrape_configs:
+  - job_name: 'prometheus'
+    # Tự giám sát Prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 1. Giám sát Gateway API (Cổng 8080 nội bộ Docker)
+  - job_name: 'gateway-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['gatewayapi:8080'] 
+
+  # 2. Giám sát Admin Service (Cổng 8080 nội bộ Docker)
+  - job_name: 'admin-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['adminservice:8080']
+
+  # 3. Giám sát Data Consumer Service (Cổng 8080 nội bộ Docker)
+  - job_name: 'consumer-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['consumerservice:8080']
+
+  # 4. Giám sát Data Provider Service (Cổng 8080 nội bộ Docker)
+  - job_name: 'provider-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['providerservice:8080']
