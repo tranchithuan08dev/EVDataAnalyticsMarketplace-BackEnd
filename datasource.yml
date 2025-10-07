@@ -1,0 +1,13 @@
+﻿# monitoring/grafana/provisioning/datasources/datasource.yml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    # URL sử dụng tên dịch vụ Docker Compose: http://<Tên Service>:<Cổng nội bộ>
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+    orgId: 1
+    version: 1
+    editable: true
