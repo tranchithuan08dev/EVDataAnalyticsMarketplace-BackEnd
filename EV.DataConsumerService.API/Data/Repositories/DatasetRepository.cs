@@ -21,5 +21,14 @@ namespace EV.DataConsumerService.API.Data.Repositories
             .Include(d => d.DatasetVersions)
             .AsNoTracking(); 
         }
+
+        
+
+        public IQueryable<Dataset> GetFullPublicDatasetsQuery()
+        {
+            return _context.Datasets
+             .Include(d => d.DatasetVersions)
+             .Where(d => d.Visibility == "public" && d.Status == "approved");
+        }
     }
 }
