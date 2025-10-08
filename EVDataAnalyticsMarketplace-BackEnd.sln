@@ -20,6 +20,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "monitoring", "monitoring", "{1BDE5224-A989-4545-972E-EA27D93F357D}"
+	ProjectSection(SolutionItems) = preProject
+		prometheus.yml = prometheus.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "grafana", "grafana", "{675425A3-929A-47E7-9F51-2D21233170CF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "provisioning", "provisioning", "{F2B3FCBC-D43E-439F-BC7D-A07F995D35FB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "datasources", "datasources", "{FC949F46-5CD0-48D2-8944-E58B5CBA0E72}"
+	ProjectSection(SolutionItems) = preProject
+		datasource.yml = datasource.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +65,9 @@ Global
 		{51892C23-A99F-4639-8E76-AE63FAE2A8FE} = {C6387620-0AEB-4561-8939-53B8441E2DE4}
 		{89DF48BF-355F-4437-A56D-B0FEAF971F58} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{532433D6-E880-4328-909C-94C30A9CBCF0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{675425A3-929A-47E7-9F51-2D21233170CF} = {1BDE5224-A989-4545-972E-EA27D93F357D}
+		{F2B3FCBC-D43E-439F-BC7D-A07F995D35FB} = {675425A3-929A-47E7-9F51-2D21233170CF}
+		{FC949F46-5CD0-48D2-8944-E58B5CBA0E72} = {F2B3FCBC-D43E-439F-BC7D-A07F995D35FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {736CAABC-F9C1-469D-8654-934587C8FED1}

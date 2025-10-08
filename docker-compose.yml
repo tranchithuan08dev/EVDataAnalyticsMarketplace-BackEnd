@@ -1,5 +1,25 @@
 ﻿version: "3.9"
 services:
+  # ========================================
+  # DỊCH VỤ DB (SQL Server)
+  # ========================================
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssqlserver
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: "chithuan123!" 
+    ports:
+      - "1433:1433" # Cổng để bạn có thể kết nối từ máy Host (SSMS)
+    volumes:
+      - mssql_data:/var/opt/mssql # <-- LƯU TRỮ DỮ LIỆU DB VĨNH VIỄN
+    networks:
+      - ev_network
+    restart: always
+    
+  # ========================================
+  # CÁC DỊCH VỤ API GATEWAY VÀ MICROSERVICE
+  # ========================================
   gatewayapi:
     build:
       context: .
@@ -24,8 +44,12 @@ services:
       dockerfile: EV.DataConsumerService.API/Dockerfile
     ports:
       - "8002:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=EVDataAnalyticsMarketplaceDB;User ID=sa;Password=chithuan123!;TrustServerCertificate=True;
     networks:
       - ev_network
+    depends_on:
+      - db
 
   providerservice:
     build:
@@ -36,6 +60,44 @@ services:
     networks:
       - ev_network
 
+# ========================================
+  # DỊCH VỤ GIÁM SÁT MỚI
+  # ========================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      # Gắn tệp cấu hình Prometheus (cần tạo: monitoring/prometheus.yml) SỬA
+      - D:/FPT_FALL25/PRN232/EVDataAnalyticsMarketplace-BackEnd/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090" # Cổng 9090 để truy cập Prometheus UI
+    networks:
+      - ev_network
+    restart: unless-stopped
+    depends_on:
+      - consumerservice # Đảm bảo service API chạy trước khi Prometheus thu thập
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000" # Cổng 3000 để truy cập Grafana UI
+    networks:
+      - ev_network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    volumes:
+      # Gắn thư mục provisioning để Grafana tự động cấu hình Data Source
+        - D:/FPT_FALL25/PRN232/EVDataAnalyticsMarketplace-BackEnd/datasources.yml:/etc/grafana/provisioning/datasources/datasource:ro
 networks:
   ev_network:
     driver: bridge
+# ========================================
+# ĐỊNH NGHĨA VOLUMES (QUAN TRỌNG: Cần nằm ở cuối tệp)
+# ========================================
+volumes:
+  mssql_data: {}
