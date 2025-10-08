@@ -26,10 +26,10 @@ modelBuilder.EntitySet<DatasetSearchResultDto>("Datasets");
 // 3. Đăng ký OData
 
 builder.Services.AddControllers()
-    .AddOData(options => options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(null).AddRouteComponents(
-        "odata",
-        modelBuilder.GetEdmModel()
-    ));
+   .AddOData(options => options
+    .Select().Filter().OrderBy().Expand().Count().SetMaxTop(null)
+    .AddRouteComponents("odata", modelBuilder.GetEdmModel()));
+
 
 
 
@@ -42,6 +42,8 @@ builder.Services.AddSwaggerGen();
 
 
 var app = builder.Build();
+
+
 
 // Middleware Prometheus
 app.UseMetricServer();   // expose /metrics

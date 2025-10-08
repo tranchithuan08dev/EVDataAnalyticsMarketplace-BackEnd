@@ -1,5 +1,25 @@
 ﻿version: "3.9"
 services:
+  # ========================================
+  # DỊCH VỤ DB (SQL Server)
+  # ========================================
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssqlserver
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: "chithuan123!" 
+    ports:
+      - "1433:1433" # Cổng để bạn có thể kết nối từ máy Host (SSMS)
+    volumes:
+      - mssql_data:/var/opt/mssql # <-- LƯU TRỮ DỮ LIỆU DB VĨNH VIỄN
+    networks:
+      - ev_network
+    restart: always
+    
+  # ========================================
+  # CÁC DỊCH VỤ API GATEWAY VÀ MICROSERVICE
+  # ========================================
   gatewayapi:
     build:
       context: .
@@ -24,8 +44,12 @@ services:
       dockerfile: EV.DataConsumerService.API/Dockerfile
     ports:
       - "8002:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=EVDataAnalyticsMarketplaceDB;User ID=sa;Password=chithuan123!;TrustServerCertificate=True;
     networks:
       - ev_network
+    depends_on:
+      - db
 
   providerservice:
     build:
@@ -72,3 +96,8 @@ services:
 networks:
   ev_network:
     driver: bridge
+# ========================================
+# ĐỊNH NGHĨA VOLUMES (QUAN TRỌNG: Cần nằm ở cuối tệp)
+# ========================================
+volumes:
+  mssql_data: {}
