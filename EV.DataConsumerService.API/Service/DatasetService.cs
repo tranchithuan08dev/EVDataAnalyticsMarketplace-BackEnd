@@ -1,6 +1,7 @@
 ﻿using EV.DataConsumerService.API.Data.IRepositories;
 using EV.DataConsumerService.API.Models.DTOs;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.EntityFrameworkCore;
 using Prometheus;
 
 namespace EV.DataConsumerService.API.Service
@@ -8,6 +9,7 @@ namespace EV.DataConsumerService.API.Service
     public class DatasetService : IDatasetService
     {
         private readonly IDatasetRepository _repository;
+
         // 1. Khai báo Metric Counter: Đếm số lần tìm kiếm được thực hiện
         private static readonly Counter DatasetSearchCount = Metrics
             .CreateCounter("marketplace_dataset_searches_total",
@@ -40,11 +42,11 @@ namespace EV.DataConsumerService.API.Service
 
                 // Ánh xạ IQueryable<T> sang DTO IQueryable<T>
                 var results = datasets.Select(d => new DatasetSearchResultDto
-                {
-                    DatasetId = d.DatasetId,
-                    Title = d.Title,
-                    Category = d.Category,
-                    Region = d.Region,
+                    {
+                        DatasetId = d.DatasetId,
+                        Title = d.Title,
+                        Category = d.Category,
+                        Region = d.Region,
 
                     // Logic làm phẳng (Flattening Logic)
                     // Lưu ý: Các hàm như Select(), Min(), Any() đều được dịch sang SQL khi truy vấn
@@ -60,5 +62,66 @@ namespace EV.DataConsumerService.API.Service
                 return results;
             }
         }
+
+        public List<DatasetFullDetailDto> GetFullDatasetDetails()
+        {
+            // 1. Định nghĩa logic Retry (Thử lại 3 lần, chờ 5 giây giữa các lần)
+            int maxRetries = 3;
+            TimeSpan delay = TimeSpan.FromSeconds(5);
+
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    // 2. Lấy IQueryable<T> từ Repository
+                    var query = _repository.GetFullPublicDatasetsQuery();
+
+                    // 3. THỰC THI TRUY VẤN TẠI ĐÂY (Buộc truy vấn chạy)
+                    var datasets = query.ToList();
+
+                    // 4. Mapping (Nếu truy vấn thành công)
+                    var result = datasets.Select(d => new DatasetFullDetailDto
+                    {
+                        // ... (Logic Mapping của bạn, giữ nguyên)
+                        DatasetId = d.DatasetId,
+                        Title = d.Title,
+                        ShortDescription = d.ShortDescription,
+                        Category = d.Category,
+                        Region = d.Region,
+                        VehicleTypes = d.VehicleTypes,
+                        Status = d.Status,
+                        Versions = d.DatasetVersions.Select(v => new DatasetVersionDto
+                        {
+                            DatasetVersionId = v.DatasetVersionId,
+                            VersionLabel = v.VersionLabel,
+                            FileFormat = v.FileFormat,
+                            PricePerDownload = v.PricePerDownload,
+                            SubscriptionRequired = v.SubscriptionRequired,
+                            StorageUri = v.StorageUri
+                        }).ToList()
+                    }).ToList();
+
+                    // Trả về nếu thành công
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    // Chỉ retry nếu đó là lỗi liên quan đến kết nối SQL Server (lỗi mạng)
+                    if (ex.InnerException?.Message.Contains("network-related") == true && i < maxRetries - 1)
+                    {
+                        // Log: "Kết nối DB thất bại. Thử lại sau 5 giây..."
+                        Thread.Sleep(delay); // Dừng luồng hiện tại
+                        continue; // Bắt đầu vòng lặp retry tiếp theo
+                    }
+
+                    // Nếu là lần thử cuối cùng hoặc lỗi không phải lỗi mạng, ném lỗi ra ngoài
+                    throw;
+                }
+            }
+
+            // Code không bao giờ tới đây, nhưng cần return để tránh lỗi cú pháp
+            return new List<DatasetFullDetailDto>();
+        }
     }
 }
+

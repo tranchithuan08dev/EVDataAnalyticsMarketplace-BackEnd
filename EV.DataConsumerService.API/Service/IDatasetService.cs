@@ -5,5 +5,6 @@ namespace EV.DataConsumerService.API.Service
     public interface IDatasetService
     {
         IQueryable<DatasetSearchResultDto> GetPublicDatasetsForSearch();
+        List<DatasetFullDetailDto> GetFullDatasetDetails();
     }
 }
