@@ -18,8 +18,6 @@ namespace EV.DataProviderService.API.Data.Repositories
         {
             // Truy vấn tất cả Datasets có ProviderId khớp
             return await _context.Datasets
-                 //.Where(d => d.ProviderId == providerId)
-                 //.OrderByDescending(d => d.CreatedAt)
                  .ToListAsync();
         }
     }

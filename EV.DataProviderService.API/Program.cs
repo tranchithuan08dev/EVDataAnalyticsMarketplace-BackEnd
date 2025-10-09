@@ -4,6 +4,7 @@ using EV.DataProviderService.API.Data.Repositories;
 using EV.DataProviderService.API.Repositories;
 using EV.DataProviderService.API.Service;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +34,12 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
 });
 
 var app = builder.Build();
+// Middleware Prometheus
+app.UseMetricServer();   // expose /metrics
+app.UseHttpMetrics();    // track HTTP metrics automatically
 
-// Configure the HTTP request pipeline., (SỬA) 
+app.MapGet("/", () => "Hello Prometheus!");
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage(); 
