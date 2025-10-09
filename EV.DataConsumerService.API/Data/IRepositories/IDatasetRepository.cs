@@ -6,5 +6,7 @@ namespace EV.DataConsumerService.API.Data.IRepositories
     {
       
         IQueryable<Dataset> FindAllPublicDatasets();
+
+        IQueryable<Dataset> GetFullPublicDatasetsQuery();
     }
 }

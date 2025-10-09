@@ -1,13 +1,10 @@
-﻿//using EV.DataProviderService.API.Models.Entities;
+﻿using EV.DataProviderService.API.Models.Entites;
 
-//namespace EV.DataProviderService.API.Data.IRepositories
-//{
-//    public interface IDataSourceRepository
-//    {
-//        Task<DataSource> RegisterDataSourceAsync(DataSource dataSource);
-//        Task<DataSource> GetDataSourceByIdAsync(int id);
-//        Task<IEnumerable<DataSource>> GetAllDataSourcesAsync();
-//        Task<bool> UpdateDataSourceAsync(DataSource dataSource);
-//        Task<bool> DeleteDataSourceAsync(int id);
-//    }
-//}
+
+namespace EV.DataProviderService.API.Data.IRepositories
+{
+    public interface IDatasetRepository
+    {
+        Task<List<Dataset>> GetAllDatasetsByProviderIdAsync(Guid providerId);
+    }
+}
