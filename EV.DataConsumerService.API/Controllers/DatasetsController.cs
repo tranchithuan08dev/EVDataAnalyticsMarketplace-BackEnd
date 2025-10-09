@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.OData.Routing.Controllers;
 namespace EV.DataConsumerService.API.Controllers
 {
     // Route sẽ là /odata/Datasets, khớp với EntitySet bạn đã đăng ký
-    [Route("odata1/[controller]")]
+    [Route("[controller]")]
     // Kế thừa ODataController để tận dụng các tính năng OData
     public class DatasetsController : ODataController
     {
