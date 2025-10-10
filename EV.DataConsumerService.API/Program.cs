@@ -8,12 +8,27 @@ using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
 using Prometheus;
+using Serilog;
 
+// ========================================
+// 1. CẤU HÌNH SERILOG
+// ========================================
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json")
+        .Build())
+    .Enrich.FromLogContext()
+    .WriteTo.Console() // Log ra Console (cho Docker)
+    .CreateLogger();
+try
+{
+    Log.Information("Starting Data Provider service host...");
 
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Host.UseSerilog();
+    // Add services to the container.
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // 2. Đăng ký DbContext với các tùy chọn cần thiết cho Docker
 builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
@@ -93,3 +108,13 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Host terminated unexpectedly");
+}
+finally
+{
+    // Đảm bảo flush log buffer trước khi thoát
+    Log.CloseAndFlush();
+}
