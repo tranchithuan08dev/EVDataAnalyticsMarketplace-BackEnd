@@ -16,7 +16,23 @@ services:
     networks:
       - ev_network
     restart: always
-    
+ 
+
+  # ========================================
+  # DỊCH VỤ TRACING (JAEGER) - BỔ SUNG
+  # ========================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      # BẬT TÍNH NĂNG NHẬN OTLP TRACES CHO COLLECTOR
+      - COLLECTOR_OTLP_ENABLED=true 
+    ports:
+      - "16686:16686" # Cổng truy cập Jaeger UI
+      - "4317:4317"   # <-- CỔNG NHẬN OTLP gRPC (TCP)
+    networks:
+      - ev_network
+    restart: unless-stopped
   # ========================================
   # CÁC DỊCH VỤ API GATEWAY VÀ MICROSERVICE
   # ========================================
@@ -28,6 +44,9 @@ services:
       - "8000:8080"
     networks:
       - ev_network
+    depends_on:
+      - jaeger
+
 
   adminservice:
     build:
@@ -37,6 +56,9 @@ services:
       - "8001:8080"
     networks:
       - ev_network
+    depends_on:
+      - db
+      - jaeger
 
   consumerservice:
     build:
@@ -50,6 +72,7 @@ services:
       - ev_network
     depends_on:
       - db
+      - jaeger
 
   providerservice:
     build:
@@ -63,6 +86,7 @@ services:
       - ev_network
     depends_on:
       - db
+      - jaeger
 
 # ========================================
   # DỊCH VỤ GIÁM SÁT MỚI
@@ -82,7 +106,8 @@ services:
       - ev_network
     restart: unless-stopped
     depends_on:
-      - consumerservice # Đảm bảo service API chạy trước khi Prometheus thu thập
+      - consumerservice # Phụ thuộc vào API service
+      - jaeger
 
   grafana:
     image: grafana/grafana:latest

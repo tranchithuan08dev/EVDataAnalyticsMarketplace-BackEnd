@@ -7,6 +7,10 @@ using EV.DataConsumerService.API.Service;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Instrumentation.Http;
 using Prometheus;
 using Serilog;
 
@@ -47,8 +51,45 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
             // thông qua chuỗi kết nối
         });
 });
-// 1. Đăng ký Services & Repositories
-builder.Services.AddScoped<IDatasetRepository, DatasetRepository>();
+
+
+    // Trong khối builder.Services.AddOpenTelemetry()
+
+    builder.Services.AddOpenTelemetry()
+        .WithTracing(tracerProviderBuilder => tracerProviderBuilder
+            // 1. Tracing cho HTTP Request
+            .AddAspNetCoreInstrumentation()
+
+            // Bổ sung: Ghi lại các lệnh gọi HTTP ra bên ngoài (tới ProviderService, v.v.)
+            .AddHttpClientInstrumentation()
+
+            // Bổ sung: Ghi lại các truy vấn DB (Đảm bảo có trace ngay cả khi EF Core instrumentation lỗi)
+            .AddSqlClientInstrumentation()
+
+            // 2. SỬ DỤNG ENTITY FRAMEWORK CORE INSTRUMENTATION
+            .AddEntityFrameworkCoreInstrumentation(options =>
+            {
+                options.SetDbStatementForText = true;
+            })
+
+            // 3. Tên Service
+            .AddSource("EV.DataConsumerService.API")
+            .SetResourceBuilder(
+                OpenTelemetry.Resources.ResourceBuilder.CreateEmpty()
+                    .AddService("consumer-api") // Tên service bạn tìm kiếm trong Jaeger UI
+            )
+
+            // 4. Exporter (ĐÃ FIX ENDPOINT)
+            .AddOtlpExporter(o =>
+            {
+                // CỰC KỲ QUAN TRỌNG: Chỉ sử dụng host và port cho gRPC
+                o.Endpoint = new Uri("http://jaeger:4317");
+                o.Protocol = OtlpExportProtocol.Grpc;
+            })
+        );
+
+    // 1. Đăng ký Services & Repositories
+    builder.Services.AddScoped<IDatasetRepository, DatasetRepository>();
 builder.Services.AddScoped<IDatasetService, DatasetService>();
 // builder.Services.AddDbContext<ApplicationDbContext>(/*...*/);
 
