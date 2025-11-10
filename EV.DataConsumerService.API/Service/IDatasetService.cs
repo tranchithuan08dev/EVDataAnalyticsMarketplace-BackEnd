@@ -6,5 +6,7 @@ namespace EV.DataConsumerService.API.Service
     {
         IQueryable<DatasetSearchResultDto> GetPublicDatasetsForSearch();
         List<DatasetFullDetailDto> GetFullDatasetDetails();
+
+        Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest);
     }
 }

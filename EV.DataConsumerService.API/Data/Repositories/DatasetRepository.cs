@@ -1,6 +1,9 @@
 ﻿using EV.DataConsumerService.API.Data.IRepositories;
+using EV.DataConsumerService.API.Models.DTOs;
 using EV.DataConsumerService.API.Models.Entities;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace EV.DataConsumerService.API.Data.Repositories
 {
@@ -29,6 +32,61 @@ namespace EV.DataConsumerService.API.Data.Repositories
             return _context.Datasets
              .Include(d => d.DatasetVersions)
              .Where(d => d.Visibility == "public" && d.Status == "approved");
+        }
+
+
+        public async Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest)
+        {
+            var results = new List<DatasetSearchDetailDto>();
+
+            // Lấy chuỗi kết nối
+            var connectionString = _context.Database.GetConnectionString();
+
+            await using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                await using (var command = new SqlCommand("usp_SearchDatasets", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    // Thêm các tham số (Parameter)
+                    command.Parameters.AddWithValue("@q", (object)searchRequest.Q ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@category", (object)searchRequest.Category ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@region", (object)searchRequest.Region ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@vehicleType", (object)searchRequest.VehicleType ?? DBNull.Value);
+
+                    // Xử lý giá trị Nullable
+                    command.Parameters.AddWithValue("@minPrice", searchRequest.MinPrice.HasValue ? (object)searchRequest.MinPrice.Value : DBNull.Value);
+                    command.Parameters.AddWithValue("@maxPrice", searchRequest.MaxPrice.HasValue ? (object)searchRequest.MaxPrice.Value : DBNull.Value);
+
+                    // Tham số phân trang
+                    command.Parameters.AddWithValue("@page", searchRequest.Page);
+                    command.Parameters.AddWithValue("@pageSize", searchRequest.PageSize);
+
+                    await using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            results.Add(new DatasetSearchDetailDto
+                            {
+                                DatasetId = reader.GetGuid(reader.GetOrdinal("DatasetId")),
+                                Title = reader.GetString(reader.GetOrdinal("Title")),
+                                // Sử dụng GetOrdinal và kiểm tra DBNull an toàn hơn
+                                ShortDescription = reader.IsDBNull(reader.GetOrdinal("ShortDescription")) ? null : reader.GetString(reader.GetOrdinal("ShortDescription")),
+                                Category = reader.IsDBNull(reader.GetOrdinal("Category")) ? null : reader.GetString(reader.GetOrdinal("Category")),
+                                Region = reader.IsDBNull(reader.GetOrdinal("Region")) ? null : reader.GetString(reader.GetOrdinal("Region")),
+                                VehicleTypes = reader.IsDBNull(reader.GetOrdinal("VehicleTypes")) ? null : reader.GetString(reader.GetOrdinal("VehicleTypes")),
+                                DatasetVersionId = reader.GetGuid(reader.GetOrdinal("DatasetVersionId")),
+                                VersionLabel = reader.GetString(reader.GetOrdinal("VersionLabel")),
+                                FileFormat = reader.GetString(reader.GetOrdinal("FileFormat")),
+                                PricePerDownload = reader.IsDBNull(reader.GetOrdinal("PricePerDownload")) ? null : reader.GetDecimal(reader.GetOrdinal("PricePerDownload"))
+                            });
+                        }
+                    }
+                }
+            }
+            return results;
         }
     }
 }

@@ -1,8 +1,9 @@
-﻿using EV.DataConsumerService.API.Service;
-using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using EV.DataConsumerService.API.Models.DTOs;
+using EV.DataConsumerService.API.Service;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace EV.DataConsumerService.API.Controllers
 {
@@ -53,6 +54,31 @@ namespace EV.DataConsumerService.API.Controllers
                 _logger.LogError(ex, "An unhandled exception occurred while retrieving the full dataset list.");
 
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("search")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DatasetSearchResultDto>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> SearchDatasets([FromQuery] DatasetSearchRequestDto searchRequest)
+        {
+            // Logic kiểm tra tham số đầu vào cơ bản
+            if (searchRequest.Page < 1 || searchRequest.PageSize < 1)
+            {
+                return BadRequest("Page và PageSize phải lớn hơn hoặc bằng 1.");
+            }
+
+            try
+            {
+                var results = await _datasetService.SearchDatasetsAsync(searchRequest);
+                // Trả về 200 OK với kết quả
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi (ví dụ: logger.LogError(ex, "Search failed"))
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình tìm kiếm dữ liệu.");
             }
         }
     }

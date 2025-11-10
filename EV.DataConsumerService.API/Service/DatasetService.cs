@@ -122,6 +122,12 @@ namespace EV.DataConsumerService.API.Service
             // Code không bao giờ tới đây, nhưng cần return để tránh lỗi cú pháp
             return new List<DatasetFullDetailDto>();
         }
+
+        public async Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest)
+        {
+            return await _repository.SearchDatasetsAsync(searchRequest);
+        }
+
     }
 }
 
