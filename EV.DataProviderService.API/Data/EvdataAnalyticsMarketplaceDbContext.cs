@@ -232,6 +232,8 @@ public partial class EvdataAnalyticsMarketplaceDbContext : DbContext
 
         modelBuilder.Entity<Provider>(entity =>
         {
+            entity.ToTable("Providers");
+            
             entity.HasKey(e => e.ProviderId).HasName("PK__Provider__B54C687D9D7A8C1A");
 
             entity.HasIndex(e => e.OrganizationId, "UQ__Provider__CADB0B13751B52EF").IsUnique();
