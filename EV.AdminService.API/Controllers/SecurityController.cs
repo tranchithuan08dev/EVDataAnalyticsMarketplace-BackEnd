@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EV.AdminService.API.Controllers
 {
-    [Route("api/[controller]s")]
+    [Route("api/[controller]")]
     [ApiController]
     //[Authorize(Policy = "AdminOnly")]
     public class SecurityController : ControllerBase

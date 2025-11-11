@@ -3,6 +3,7 @@
     public class PendingModerationDTO
     {
         public Guid DatasetId { get; set; }
+        public Guid DatasetVersionId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string ProviderName { get; set; } = string.Empty;
         public DateTime SubmittedAt { get; set; }

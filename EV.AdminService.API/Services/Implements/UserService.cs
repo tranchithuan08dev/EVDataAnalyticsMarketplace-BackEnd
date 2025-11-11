@@ -27,6 +27,7 @@ namespace EV.AdminService.API.Services.Implements
 
             user.IsActive = isActive;
             await _unitOfWork.UserRepository.UpdateAsync(user, ct).ConfigureAwait(false);
+            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
             return true;
         }
 
@@ -44,6 +45,7 @@ namespace EV.AdminService.API.Services.Implements
 
             await _unitOfWork.UserRepository.AddRolesAsync(user, newRoles, ct).ConfigureAwait(false);
 
+            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
             return true;
         }
 
@@ -58,6 +60,7 @@ namespace EV.AdminService.API.Services.Implements
 
             provider.Verified = true;
             await _unitOfWork.ProviderRepository.UpdateAsync(provider, ct).ConfigureAwait(false);
+            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
             return true;
         }
     }

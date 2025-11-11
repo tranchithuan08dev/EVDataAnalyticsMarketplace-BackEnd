@@ -38,7 +38,7 @@ namespace EV.AdminService.API.AI.Services.Implements
                     confidence: 99.0,
                     changeHistoryLength: historyWindowSize,
                     trainingWindowSize: trainingWindowSize,
-                    seasonalityWindowSize: 0);
+                    seasonalityWindowSize: 2);
 
                 IDataView transformedData = pipeline.Fit(dataView).Transform(dataView);
                 var predictions = _context.Data.CreateEnumerable<TimeSeriesPrediction>(transformedData, false).ToList();

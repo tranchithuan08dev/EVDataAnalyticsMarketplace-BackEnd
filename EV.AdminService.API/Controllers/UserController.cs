@@ -1,11 +1,13 @@
 ﻿using EV.AdminService.API.DTOs.Requests;
 using EV.AdminService.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EV.AdminService.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize(Policy = "AdminOnly")]
     public class UserController : ControllerBase
     {
         private readonly IServicesProvider _servicesProvider;

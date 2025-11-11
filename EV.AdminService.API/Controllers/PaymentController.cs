@@ -1,10 +1,12 @@
 ﻿using EV.AdminService.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EV.AdminService.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize(Policy = "AdminOnly")]
     public class PaymentController : ControllerBase
     {
         private readonly IServicesProvider _servicesProvider;
@@ -26,7 +28,7 @@ namespace EV.AdminService.API.Controllers
             var result = await _servicesProvider.PaymentService.DistributeRevenueAsync(paymentId, ct);
             if (!result)
             {
-                return BadRequest("Cannot distrivute revenue. Recheck PaymentId/Provider.OrganizationId");
+                return BadRequest("Cannot distribute revenue. Recheck PaymentId/Provider.OrganizationId or payment already distributed.");
             }
 
             return Ok();

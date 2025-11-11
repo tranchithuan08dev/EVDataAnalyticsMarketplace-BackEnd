@@ -13,7 +13,9 @@ namespace EV.AdminService.API.Repositories.Implements
         public async Task<DatasetVersion?> GetPendingVersion(CancellationToken ct = default)
         {
             return await _dbSet.AsNoTracking()
-                .Where(v => v.Dataset.Status == "pending" && !v.DataQualityFlags.Any()).FirstOrDefaultAsync(ct).ConfigureAwait(false);
+                .Where(v => v.Dataset.Status == "pending" && !v.DataQualityFlags.Any())
+                .OrderBy(v => v.CreatedAt)
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
         }
 
         public async Task<DatasetVersion?> GetDatasetVersionAsync(Guid datasetVersionId, CancellationToken ct = default)

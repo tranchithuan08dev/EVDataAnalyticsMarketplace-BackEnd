@@ -22,5 +22,6 @@ namespace EV.AdminService.API.Repositories.Interfaces
         PurchaseRepository PurchaseRepository { get; }
         SubscriptionRepository SubscriptionRepository { get; }
         AnalysisRepository AnalysisRepository { get; }
+        AccessPolicyRepository AccessPolicyRepository { get; }
     }
 }

@@ -74,6 +74,7 @@ namespace EV.AdminService.API.Services.Implements
                 result.Add(new PendingModerationDTO
                 {
                     DatasetId = dataset.DatasetId,
+                    DatasetVersionId = latestVersion.DatasetVersionId,
                     ProviderName = dataset.Provider.Organization.Name,
                     SubmittedAt = dataset.CreatedAt,
                     RedFlags = flags.Count(f => f.FlagType == "red"),

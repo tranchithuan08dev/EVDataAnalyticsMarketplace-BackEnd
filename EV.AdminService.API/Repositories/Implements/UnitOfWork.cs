@@ -22,6 +22,7 @@ namespace EV.AdminService.API.Repositories.Implements
         private PurchaseRepository? _purchaseRepository;
         private SubscriptionRepository? _subscriptionRepository;
         private AnalysisRepository? _analysisRepository;
+        private AccessPolicyRepository? _accessPolicyRepository;
 
         public UnitOfWork(EVDataAnalyticsMarketplaceDBContext context)
         {
@@ -40,6 +41,7 @@ namespace EV.AdminService.API.Repositories.Implements
         public PurchaseRepository PurchaseRepository => _purchaseRepository ??= new PurchaseRepository(_context);
         public SubscriptionRepository SubscriptionRepository => _subscriptionRepository ??= new SubscriptionRepository(_context);
         public AnalysisRepository AnalysisRepository => _analysisRepository ??= new AnalysisRepository(_context);
+        public AccessPolicyRepository AccessPolicyRepository => _accessPolicyRepository ??= new AccessPolicyRepository(_context);
 
         void IDisposable.Dispose()
         {

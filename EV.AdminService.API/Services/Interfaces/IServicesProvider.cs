@@ -11,5 +11,8 @@ namespace EV.AdminService.API.Services.Interfaces
         IPaymentService PaymentService { get; }
         ISecurityService SecurityService { get; }
         IAnalyticsService AnalyticsService { get; }
+        IRoleService RoleService { get; }
+        IPolicyService PolicyService { get; }
+        ISubscriptionService SubscriptionService { get; }
     }
 }

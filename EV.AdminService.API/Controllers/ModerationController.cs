@@ -6,7 +6,7 @@ namespace EV.AdminService.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    //[Authorize(Policy = "AdminOnly")]
     public class ModerationController : ControllerBase
     {
         private readonly IServicesProvider _servicesProvider;

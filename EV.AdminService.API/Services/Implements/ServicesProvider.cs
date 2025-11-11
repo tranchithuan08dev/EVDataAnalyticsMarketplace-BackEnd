@@ -17,6 +17,9 @@ namespace EV.AdminService.API.Services.Implements
         private IPaymentService? _paymentService;
         private ISecurityService? _securityService;
         private IAnalyticsService? _analyticsService;
+        private IRoleService? _roleService;
+        private IPolicyService? _policyService;
+        private ISubscriptionService? _subscriptionService;
 
         public ServicesProvider(IUnitOfWork unitOfWork, MLContext mlContext)
         {
@@ -30,5 +33,8 @@ namespace EV.AdminService.API.Services.Implements
         public IPaymentService PaymentService => _paymentService ??= new PaymentService(_unitOfWork);
         public ISecurityService SecurityService => _securityService ??= new SecurityService(_unitOfWork);
         public IAnalyticsService AnalyticsService => _analyticsService ??= new AnalyticsService(_unitOfWork);
+        public IRoleService RoleService => _roleService ??= new RoleService(_unitOfWork);
+        public IPolicyService PolicyService => _policyService ??= new PolicyService(_unitOfWork);
+        public ISubscriptionService SubscriptionService => _subscriptionService ??= new SubscriptionService(_unitOfWork);
     }
 }
