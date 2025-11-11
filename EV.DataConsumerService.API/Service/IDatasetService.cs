@@ -8,5 +8,7 @@ namespace EV.DataConsumerService.API.Service
         List<DatasetFullDetailDto> GetFullDatasetDetails();
 
         Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest);
+
+        Task PurchaseDatasetAsync(PurchaseRequestDto purchaseRequest);
     }
 }

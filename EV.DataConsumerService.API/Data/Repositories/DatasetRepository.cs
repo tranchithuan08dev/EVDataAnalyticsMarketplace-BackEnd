@@ -88,5 +88,32 @@ namespace EV.DataConsumerService.API.Data.Repositories
             }
             return results;
         }
+
+        public async Task ExecutePurchaseAsync(PurchaseRequestDto purchaseRequest)
+        {
+            var connectionString = _context.Database.GetConnectionString();
+
+            await using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                await using (var command = new SqlCommand("usp_PurchaseDataset", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    // Thêm các tham số cho Stored Procedure:
+                    command.Parameters.AddWithValue("@BuyerUserId", purchaseRequest.BuyerUserId);
+                    command.Parameters.AddWithValue("@BuyerOrgId", purchaseRequest.BuyerOrgId);
+                    command.Parameters.AddWithValue("@DatasetVersionId", purchaseRequest.DatasetVersionId);
+                    command.Parameters.AddWithValue("@Price", purchaseRequest.Price);
+                    // Tham số tùy chọn:
+                    command.Parameters.AddWithValue("@Currency", (object)purchaseRequest.Currency ?? "USD");
+                    command.Parameters.AddWithValue("@AccessDays", purchaseRequest.AccessDays.HasValue ? (object)purchaseRequest.AccessDays.Value : DBNull.Value);
+
+                    // Thực thi Stored Procedure (không cần đọc kết quả, chỉ cần thực thi)
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
     }
 }

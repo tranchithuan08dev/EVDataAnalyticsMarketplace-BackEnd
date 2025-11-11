@@ -2,6 +2,7 @@
 using EV.DataConsumerService.API.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -79,6 +80,40 @@ namespace EV.DataConsumerService.API.Controllers
             {
                 // Ghi log lỗi (ví dụ: logger.LogError(ex, "Search failed"))
                 return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình tìm kiếm dữ liệu.");
+            }
+        }
+
+        [HttpPost("purchase")]
+        [ProducesResponseType(StatusCodes.Status202Accepted)] // 202 Accepted thường dùng cho giao dịch
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PurchaseDataset([FromBody] PurchaseRequestDto purchaseRequest)
+        {
+            // Model validation (từ [Required], [Range] trong DTO)
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // Giả định rằng DTO đã chứa thông tin về người dùng (BuyerUserId, BuyerOrgId)
+                // thường được lấy từ JWT/Claim của người dùng đã đăng nhập.
+
+                await _datasetService.PurchaseDatasetAsync(purchaseRequest);
+
+                // Trả về 202 Accepted (Giao dịch đang được xử lý hoặc đã được chấp nhận)
+                return Accepted(new { message = "Yêu cầu mua dữ liệu đã được ghi nhận thành công." });
+            }
+            catch (SqlException ex) when (ex.Number == 50000) // Ví dụ: Bắt lỗi RAISEERROR tùy chỉnh từ SQL
+            {
+                // Bắt lỗi cụ thể từ SQL nếu có
+                return BadRequest($"Lỗi giao dịch: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình xử lý giao dịch mua.");
             }
         }
     }

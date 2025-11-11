@@ -11,5 +11,6 @@ namespace EV.DataConsumerService.API.Data.IRepositories
         IQueryable<Dataset> GetFullPublicDatasetsQuery();
 
         Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest);
+        Task ExecutePurchaseAsync(PurchaseRequestDto purchaseRequest);
     }
 }

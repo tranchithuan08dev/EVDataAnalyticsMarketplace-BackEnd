@@ -127,7 +127,11 @@ namespace EV.DataConsumerService.API.Service
         {
             return await _repository.SearchDatasetsAsync(searchRequest);
         }
+        public async Task PurchaseDatasetAsync(PurchaseRequestDto purchaseRequest)
+        {
+            await _repository.ExecutePurchaseAsync(purchaseRequest);
 
+        }
     }
 }
 
