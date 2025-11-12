@@ -15,6 +15,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+}
+
 // 1. Đăng ký Services & Repositories
 builder.Services.AddScoped<IDatasetRepository, DatasetRepository>();
 builder.Services.AddScoped<IDatasetService, DatasetService>();
@@ -22,6 +28,8 @@ builder.Services.AddScoped<IRevenueRepository, RevenueRepository>();
 builder.Services.AddScoped<IRevenueService, RevenueService>();
 builder.Services.AddScoped<IAnonymizationRepository, AnonymizationRepository>();
 builder.Services.AddScoped<IAnonymizationService, AnonymizationService>();
+builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
+builder.Services.AddScoped<IProviderService, ProviderService>();
 // 2. Đăng ký DbContext với các tùy chọn cần thiết cho Docker
 builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
 {
