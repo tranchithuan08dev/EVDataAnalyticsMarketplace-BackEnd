@@ -32,7 +32,7 @@ namespace EV.AdminService.API.Services.Implements
         public IAdminModerationService AdminModerationService => _adminModerationService ??= new AdminModerationService(_unitOfWork);
         public IPaymentService PaymentService => _paymentService ??= new PaymentService(_unitOfWork);
         public ISecurityService SecurityService => _securityService ??= new SecurityService(_unitOfWork);
-        public IAnalyticsService AnalyticsService => _analyticsService ??= new AnalyticsService(_unitOfWork);
+        public IAnalyticsService AnalyticsService => _analyticsService ??= new AnalyticsService(_unitOfWork, _mlContext);
         public IRoleService RoleService => _roleService ??= new RoleService(_unitOfWork);
         public IPolicyService PolicyService => _policyService ??= new PolicyService(_unitOfWork);
         public ISubscriptionService SubscriptionService => _subscriptionService ??= new SubscriptionService(_unitOfWork);

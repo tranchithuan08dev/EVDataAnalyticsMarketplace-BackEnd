@@ -26,5 +26,17 @@ namespace EV.AdminService.API.Controllers
             var reports = await _servicesProvider.AnalyticsService.GetAITrendReportsAsync(ct);
             return Ok(reports);
         }
+
+        [HttpGet("forecast/demand")]
+        public async Task<IActionResult> GetDemandForecast([FromQuery] int days = 30, CancellationToken ct = default)
+        {
+            if (days <= 0 || days > 365)
+            {
+                return BadRequest("Days must be between 1 and 365.");
+            }
+
+            var forecast = await _servicesProvider.AnalyticsService.GetDemandForecastAsync(days, ct);
+            return Ok(forecast);
+        }
     }
 }
