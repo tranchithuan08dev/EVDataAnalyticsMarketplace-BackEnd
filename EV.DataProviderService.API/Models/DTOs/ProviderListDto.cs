@@ -6,6 +6,7 @@ public class ProviderListDto
     
     // Organization Information
     public string OrganizationName { get; set; } = null!;
+    public Guid OrganizationId { get; set; }
     public string? OrgType { get; set; } // hãng xe, trạm sạc, fleet operators, ...
     public string? OrganizationDescription { get; set; }
     public string? Country { get; set; }
@@ -28,6 +29,9 @@ public class ProviderListDto
     
     // Sharing Policies Summary
     public SharingPoliciesSummaryDto? SharingPolicies { get; set; }
+
+    // Dataset Versions
+    public Guid DatasetVersionId { get; set; }
 }
 
 public class PricingSummaryDto
