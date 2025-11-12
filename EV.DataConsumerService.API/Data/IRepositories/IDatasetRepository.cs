@@ -12,5 +12,11 @@ namespace EV.DataConsumerService.API.Data.IRepositories
 
         Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest);
         Task ExecutePurchaseAsync(PurchaseRequestDto purchaseRequest);
+
+        Task<SubscriptionResponseDto> ExecuteSubscriptionAndApiKeyCreationAsync(
+        SubscriptionRequestDto request,
+        byte[] apiKeyHash,
+        DateTime expiresAt,
+        string plainApiKey);
     }
 }

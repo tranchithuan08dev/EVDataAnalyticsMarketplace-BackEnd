@@ -3,6 +3,9 @@ using EV.DataConsumerService.API.Models.DTOs;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
+using System.Text;
+using System.Security.Cryptography; // Cần thiết cho việc Hash key an toàn
+
 
 namespace EV.DataConsumerService.API.Service
 {
@@ -131,6 +134,54 @@ namespace EV.DataConsumerService.API.Service
         {
             await _repository.ExecutePurchaseAsync(purchaseRequest);
 
+        }
+
+
+
+        public async Task<SubscriptionResponseDto> SubscribeDatasetAsync(SubscriptionRequestDto request)
+        {
+            // 1. Logic tạo API Key và Hash
+
+            // Tạo một Key thô (plain key) ngẫu nhiên, mạnh
+            string plainApiKey = GenerateSecureApiKey();
+
+            // Hash key để lưu trữ trong cơ sở dữ liệu (VARBINARY(MAX))
+            byte[] apiKeyHash = HashApiKey(plainApiKey);
+
+            // 2. Tính toán ngày hết hạn
+            DateTime expiresAt = DateTime.UtcNow.AddDays(request.DurationDays);
+
+            // 3. Gọi Repository trong Transaction
+            return await _repository.ExecuteSubscriptionAndApiKeyCreationAsync(
+                request,
+                apiKeyHash,
+                expiresAt,
+                plainApiKey);
+        }
+
+        // *** CÁC PHƯƠNG THỨC HỖ TRỢ BẢO MẬT ***
+
+        /// <summary>
+        /// Tạo một chuỗi API Key ngẫu nhiên, an toàn (ví dụ: sử dụng Guid kết hợp).
+        /// </summary>
+        private string GenerateSecureApiKey()
+        {
+            // Trong môi trường Production, bạn nên sử dụng RandomNumberGenerator để tạo byte an toàn hơn
+            // Tuy nhiên, đây là ví dụ đơn giản hóa:
+            return Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+        }
+
+        /// <summary>
+        /// Hash chuỗi API Key thô bằng thuật toán SHA256 (nên dùng Argon2, PBKDF2 cho mật khẩu).
+        /// </summary>
+        private byte[] HashApiKey(string apiKey)
+        {
+            // Cần package: System.Security.Cryptography
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(apiKey);
+                return sha256.ComputeHash(inputBytes);
+            }
         }
     }
 }

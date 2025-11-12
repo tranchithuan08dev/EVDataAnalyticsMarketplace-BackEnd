@@ -115,5 +115,77 @@ namespace EV.DataConsumerService.API.Data.Repositories
                 }
             }
         }
+
+        public async Task<SubscriptionResponseDto> ExecuteSubscriptionAndApiKeyCreationAsync(
+                SubscriptionRequestDto request,
+                byte[] apiKeyHash,
+                DateTime expiresAt,
+                string plainApiKey)
+        {
+            var connectionString = _context.Database.GetConnectionString();
+            var response = new SubscriptionResponseDto();
+
+            await using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                await using (SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        // 1. CHÈN VÀO BẢNG SUBSCRIPTIONS
+                        Guid subscriptionId = Guid.NewGuid();
+                        string subSql = @"
+                            INSERT INTO Subscriptions (SubscriptionId, ConsumerOrgId, DatasetId, ExpiresAt, RecurringPrice)
+                            VALUES (@SubscriptionId, @ConsumerOrgId, @DatasetId, @ExpiresAt, @RecurringPrice)";
+
+                        // Không cần ép kiểu transaction trong constructor nữa
+                        await using (var subCommand = new SqlCommand(subSql, connection, transaction))
+                        {
+                            subCommand.Parameters.AddWithValue("@SubscriptionId", subscriptionId);
+                            subCommand.Parameters.AddWithValue("@ConsumerOrgId", request.ConsumerOrgId);
+                            subCommand.Parameters.AddWithValue("@DatasetId", request.DatasetId);
+                            subCommand.Parameters.AddWithValue("@ExpiresAt", expiresAt);
+                            subCommand.Parameters.AddWithValue("@RecurringPrice", request.RecurringPrice);
+                            await subCommand.ExecuteNonQueryAsync();
+
+                            response.SubscriptionId = subscriptionId;
+                        }
+
+                        // 2. CHÈN VÀO BẢNG APIKEYS
+                        Guid apiKeyId = Guid.NewGuid();
+                        string keySql = @"
+                            INSERT INTO ApiKeys (ApiKeyId, OrganizationId, KeyHash, Description, ExpiresAt)
+                            VALUES (@ApiKeyId, @OrganizationId, @KeyHash, @Description, @ExpiresAt)";
+
+                        // Không cần ép kiểu transaction trong constructor nữa
+                        await using (var keyCommand = new SqlCommand(keySql, connection, transaction))
+                        {
+                            keyCommand.Parameters.AddWithValue("@ApiKeyId", apiKeyId);
+                            keyCommand.Parameters.AddWithValue("@OrganizationId", request.ConsumerOrgId);
+                            keyCommand.Parameters.AddWithValue("@KeyHash", apiKeyHash);
+                            keyCommand.Parameters.AddWithValue("@Description", $"API Key cho thuê bao Dataset {request.DatasetId}");
+                            keyCommand.Parameters.AddWithValue("@ExpiresAt", expiresAt);
+                            await keyCommand.ExecuteNonQueryAsync();
+
+                            response.ApiKeyId = apiKeyId;
+                            response.NewApiKey = plainApiKey;
+                            response.ExpiresAt = expiresAt;
+                            response.Message = "Thuê bao và API Key đã được tạo thành công.";
+                        }
+
+                        await transaction.CommitAsync();
+                        return response;
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        throw new Exception("Lỗi khi tạo thuê bao và API Key trong giao dịch.", ex);
+                    }
+                }
+            }
+        
+    }
+
     }
 }
