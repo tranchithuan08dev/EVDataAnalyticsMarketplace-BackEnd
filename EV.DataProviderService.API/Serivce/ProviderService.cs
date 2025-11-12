@@ -50,6 +50,7 @@ public class ProviderService : IProviderService
         return new ProviderListDto
         {
             ProviderId = provider.ProviderId,
+            OrganizationId = provider.OrganizationId,
             OrganizationName = provider.Organization?.Name ?? string.Empty,
             OrgType = provider.Organization?.OrgType,
             OrganizationDescription = provider.Organization?.Description,
@@ -62,7 +63,8 @@ public class ProviderService : IProviderService
             PendingDatasets = datasets.Count(d => !string.IsNullOrEmpty(d.Status) && d.Status.ToLower() == "pending"),
             AvailableDataTypes = dataTypes,
             PricingSummary = pricingSummary,
-            SharingPolicies = sharingPolicies
+            SharingPolicies = sharingPolicies,
+            DatasetVersionId = allVersions.FirstOrDefault()?.DatasetVersionId ?? Guid.Empty
         };
     }
 
