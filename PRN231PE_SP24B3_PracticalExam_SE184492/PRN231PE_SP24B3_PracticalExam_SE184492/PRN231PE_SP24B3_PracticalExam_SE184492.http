@@ -1,6 +1,0 @@
-@PRN231PE_SP24B3_PracticalExam_SE184492_HostAddress = http://localhost:5202
-
-GET {{PRN231PE_SP24B3_PracticalExam_SE184492_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
