@@ -1,8 +1,10 @@
-﻿using EV.DataConsumerService.API.Service;
-using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using EV.DataConsumerService.API.Models.DTOs;
+using EV.DataConsumerService.API.Service;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace EV.DataConsumerService.API.Controllers
 {
@@ -53,6 +55,65 @@ namespace EV.DataConsumerService.API.Controllers
                 _logger.LogError(ex, "An unhandled exception occurred while retrieving the full dataset list.");
 
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("search")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DatasetSearchResultDto>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> SearchDatasets([FromQuery] DatasetSearchRequestDto searchRequest)
+        {
+            // Logic kiểm tra tham số đầu vào cơ bản
+            if (searchRequest.Page < 1 || searchRequest.PageSize < 1)
+            {
+                return BadRequest("Page và PageSize phải lớn hơn hoặc bằng 1.");
+            }
+
+            try
+            {
+                var results = await _datasetService.SearchDatasetsAsync(searchRequest);
+                // Trả về 200 OK với kết quả
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi (ví dụ: logger.LogError(ex, "Search failed"))
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình tìm kiếm dữ liệu.");
+            }
+        }
+
+        [HttpPost("purchase")]
+        [ProducesResponseType(StatusCodes.Status202Accepted)] // 202 Accepted thường dùng cho giao dịch
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PurchaseDataset([FromBody] PurchaseRequestDto purchaseRequest)
+        {
+            // Model validation (từ [Required], [Range] trong DTO)
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // Giả định rằng DTO đã chứa thông tin về người dùng (BuyerUserId, BuyerOrgId)
+                // thường được lấy từ JWT/Claim của người dùng đã đăng nhập.
+
+                await _datasetService.PurchaseDatasetAsync(purchaseRequest);
+
+                // Trả về 202 Accepted (Giao dịch đang được xử lý hoặc đã được chấp nhận)
+                return Accepted(new { message = "Yêu cầu mua dữ liệu đã được ghi nhận thành công." });
+            }
+            catch (SqlException ex) when (ex.Number == 50000) // Ví dụ: Bắt lỗi RAISEERROR tùy chỉnh từ SQL
+            {
+                // Bắt lỗi cụ thể từ SQL nếu có
+                return BadRequest($"Lỗi giao dịch: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình xử lý giao dịch mua.");
             }
         }
     }
