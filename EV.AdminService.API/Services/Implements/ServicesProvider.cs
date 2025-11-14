@@ -9,6 +9,8 @@ namespace EV.AdminService.API.Services.Implements
     public class ServicesProvider : IServicesProvider
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly MLContext _mlContext;
         private IUserService? _userService;
         private IOrganizationService? _organizationService;
@@ -21,10 +23,12 @@ namespace EV.AdminService.API.Services.Implements
         private IPolicyService? _policyService;
         private ISubscriptionService? _subscriptionService;
 
-        public ServicesProvider(IUnitOfWork unitOfWork, MLContext mlContext)
+        public ServicesProvider(IUnitOfWork unitOfWork, MLContext mlContext, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _unitOfWork = unitOfWork;
             _mlContext = mlContext;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
         public IUserService UserService => _userService ??= new UserService(_unitOfWork);
         public IOrganizationService OrganizationService => _organizationService ??= new OrganizationService(_unitOfWork);
@@ -32,7 +36,7 @@ namespace EV.AdminService.API.Services.Implements
         public IAdminModerationService AdminModerationService => _adminModerationService ??= new AdminModerationService(_unitOfWork);
         public IPaymentService PaymentService => _paymentService ??= new PaymentService(_unitOfWork);
         public ISecurityService SecurityService => _securityService ??= new SecurityService(_unitOfWork);
-        public IAnalyticsService AnalyticsService => _analyticsService ??= new AnalyticsService(_unitOfWork, _mlContext);
+        public IAnalyticsService AnalyticsService => _analyticsService ??= new AnalyticsService(_unitOfWork, _mlContext, _configuration, _httpClientFactory);
         public IRoleService RoleService => _roleService ??= new RoleService(_unitOfWork);
         public IPolicyService PolicyService => _policyService ??= new PolicyService(_unitOfWork);
         public ISubscriptionService SubscriptionService => _subscriptionService ??= new SubscriptionService(_unitOfWork);

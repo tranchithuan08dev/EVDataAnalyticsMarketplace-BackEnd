@@ -35,8 +35,8 @@ namespace EV.AdminService.API.Controllers
                 return BadRequest("Days must be between 1 and 365.");
             }
 
-            var forecast = await _servicesProvider.AnalyticsService.GetDemandForecastAsync(days, ct);
-            return Ok(forecast);
+            var combinedReport = await _servicesProvider.AnalyticsService.GetDemandForecastAsync(days, ct);
+            return Ok(combinedReport);
         }
     }
 }

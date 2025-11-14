@@ -7,6 +7,6 @@ namespace EV.AdminService.API.Services.Interfaces
     {
         Task<IEnumerable<PopularDatasetDTO>> GetPopularDatasetsAsync(CancellationToken ct = default);
         Task<IEnumerable<AnalysisReportDTO>> GetAITrendReportsAsync(CancellationToken ct = default);
-        Task<DemandForecast> GetDemandForecastAsync(int horizon, CancellationToken ct = default);
+        Task<CombinedAnalysisReport> GetDemandForecastAsync(int horizon, CancellationToken ct = default);
     }
 }
