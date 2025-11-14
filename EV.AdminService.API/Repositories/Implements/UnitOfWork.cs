@@ -23,6 +23,7 @@ namespace EV.AdminService.API.Repositories.Implements
         private SubscriptionRepository? _subscriptionRepository;
         private AnalysisRepository? _analysisRepository;
         private AccessPolicyRepository? _accessPolicyRepository;
+        private AnonymizationLogRepository? _anonymizationLogRepository;
 
         public UnitOfWork(EVDataAnalyticsMarketplaceDBContext context)
         {
@@ -42,6 +43,7 @@ namespace EV.AdminService.API.Repositories.Implements
         public SubscriptionRepository SubscriptionRepository => _subscriptionRepository ??= new SubscriptionRepository(_context);
         public AnalysisRepository AnalysisRepository => _analysisRepository ??= new AnalysisRepository(_context);
         public AccessPolicyRepository AccessPolicyRepository => _accessPolicyRepository ??= new AccessPolicyRepository(_context);
+        public AnonymizationLogRepository AnonymizationLogRepository => _anonymizationLogRepository ??= new AnonymizationLogRepository(_context);
 
         void IDisposable.Dispose()
         {

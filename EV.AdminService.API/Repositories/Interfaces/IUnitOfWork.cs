@@ -23,5 +23,6 @@ namespace EV.AdminService.API.Repositories.Interfaces
         SubscriptionRepository SubscriptionRepository { get; }
         AnalysisRepository AnalysisRepository { get; }
         AccessPolicyRepository AccessPolicyRepository { get; }
+        AnonymizationLogRepository AnonymizationLogRepository { get; }
     }
 }

@@ -2,6 +2,7 @@
 using EV.AdminService.API.AI.Services.Interfaces;
 using EV.AdminService.API.Models;
 using Microsoft.ML;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace EV.AdminService.API.AI.Services.Implements
@@ -165,6 +166,83 @@ namespace EV.AdminService.API.AI.Services.Implements
                 Message = message,
                 ProcessedBy = processor,
                 CreatedAt = DateTime.UtcNow
+            };
+        }
+
+        public async Task<List<EVDataPoint>> AnonymizeDataAsync(List<EVDataPoint> rawData, CancellationToken ct = default)
+        {
+            var cleanDataList = new List<EVDataPoint>();
+
+            using (var sha256 = SHA256.Create())
+            {
+                foreach (var row in rawData)
+                {
+                    var cleanRow = new EVDataPoint
+                    {
+                        Timestamp = row.Timestamp,
+                        SoC = row.SoC,
+                        BatteryTemp = row.BatteryTemp,
+                        Odometer = row.Odometer,
+                        DriverNotes = string.Empty
+                    };
+
+                    cleanRow.DriverNotes = "[REDACTED]";
+                    cleanDataList.Add(cleanRow);
+                }
+            }
+
+            return await Task.FromResult(cleanDataList).ConfigureAwait(false);
+        }
+
+        public async Task<AnalysisSummary> GenerateSummaryReportAsync(List<EVDataPoint> cleanData, CancellationToken ct = default)
+        {
+            if (cleanData == null || !cleanData.Any())
+            {
+                return new AnalysisSummary();
+            }
+
+            var summary = new AnalysisSummary();
+
+            summary.TotalTrips = cleanData.Count;
+
+            summary.AverageKm = cleanData.Average(d => d.Odometer);
+            summary.MaxSoc = cleanData.Max(d => d.SoC);
+            summary.MinBatteryTemp = cleanData.Min(d => d.BatteryTemp);
+
+            var peakHour = cleanData
+                .GroupBy(d => d.Timestamp)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .FirstOrDefault();
+
+            summary.PeakUsageHour = peakHour != null ? DateTime.Parse(peakHour).Hour : (int?)null;
+            return await Task.FromResult(summary).ConfigureAwait(false);
+        }
+
+        public async Task<SuggestPricingModel> SuggestPricingAsync(AnalysisSummary summaryReport, CancellationToken ct = default)
+        {
+            decimal baseValue = 50.0m;
+            baseValue += (decimal) (summaryReport.TotalTrips / 100.0m);
+            if (summaryReport.MinBatteryTemp != 0)
+            {
+                baseValue += 20.0m;
+            }
+
+            if (summaryReport.PeakUsageHour >= 0 && summaryReport.PeakUsageHour <= 4)
+            {
+                baseValue += 50.0m;
+            }
+
+            await Task.Delay(150, ct).ConfigureAwait(false);
+
+            var suggestedBuyPrice = Math.Round(baseValue, 2);
+
+            var suggestedRentPrice = Math.Round(baseValue * 5.0m, 2);
+
+            return new SuggestPricingModel
+            {
+                BuyPrice = suggestedBuyPrice,
+                RentPrice = suggestedRentPrice
             };
         }
     }

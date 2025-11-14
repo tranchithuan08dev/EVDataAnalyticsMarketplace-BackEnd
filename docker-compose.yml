@@ -67,7 +67,7 @@ services:
     ports:
       - "8002:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=EVDataAnalyticsMarketplaceDB;User ID=sa;Password=chithuan123!;TrustServerCertificate=True;MultipleActiveResultSets=true;Connect Timeout=30;
+      - ConnectionStrings__DefaultConnection=Server=db;Database=EVDataAnalyticsMarketplaceDB;User ID=sa;Password=chithuan123!;TrustServerCertificate=True;
     networks:
       - ev_network
     depends_on:
@@ -80,8 +80,6 @@ services:
       dockerfile: EV.DataProviderService.API/Dockerfile
     ports:
       - "8003:8080"
-    environment:
-      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=EVDataAnalyticsMarketplaceDB;User ID=sa;Password=chithuan123!;TrustServerCertificate=True;MultipleActiveResultSets=true;Connect Timeout=30;
     networks:
       - ev_network
     depends_on:
