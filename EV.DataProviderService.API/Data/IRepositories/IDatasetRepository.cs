@@ -11,5 +11,14 @@ namespace EV.DataProviderService.API.Data.IRepositories
         Task<ProviderDetailDto> GetProviderDetailsAsync(Guid providerId);
 
         Task<IEnumerable<ProviderDatasetSummaryDto>> GetDatasetsByProviderIdAsync(Guid providerId);
+
+        Task<DatasetDetailFullDto> GetDatasetHeaderDetailAsync(Guid datasetId);
+
+        
+        Task<IEnumerable<DatasetVersionDetailDto>> GetDatasetVersionsAsync(Guid datasetId);
+
+     
+        Task<IEnumerable<DataFileDto>> GetDataFilesByVersionIdAsync(Guid datasetVersionId);
+
     }
 }

@@ -69,6 +69,31 @@ namespace EV.DataProviderService.API.Service
                 Datasets = datasets
             };
         }
+
+        public async Task<DatasetDetailFullDto> GetDetailDatasetAsync(Guid datasetId)
+        {
+            // 1. Lấy thông tin header Dataset, Provider và Organization
+            var detail = await _repository.GetDatasetHeaderDetailAsync(datasetId);
+
+            if (detail == null)
+            {
+                return null;
+            }
+
+            // 2. Lấy tất cả các phiên bản của Dataset
+            var versions = await _repository.GetDatasetVersionsAsync(datasetId);
+
+            // 3. Lặp qua từng phiên bản để lấy DataFiles
+            foreach (var version in versions)
+            {
+                var files = await _repository.GetDataFilesByVersionIdAsync(version.DatasetVersionId);
+                version.DataFiles = files;
+            }
+
+            // 4. Tổng hợp
+            detail.Versions = versions;
+            return detail;
+        }   
     }
   }
     
