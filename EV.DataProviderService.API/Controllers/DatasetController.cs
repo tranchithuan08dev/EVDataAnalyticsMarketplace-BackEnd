@@ -35,5 +35,35 @@ namespace EV.DataProviderService.API.Controllers
 
             return Ok(datasets);
         }
+
+
+        [HttpGet("provider/{providerId}/details")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProviderDatasetDetailDto))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetProviderDetailsWithDatasets(Guid providerId)
+        {
+            if (providerId == Guid.Empty)
+            {
+                return BadRequest("Provider ID không hợp lệ.");
+            }
+
+            try
+            {
+                var result = await _service.GetProviderDetailsWithDatasetsAsync(providerId);
+
+                if (result == null || result.Provider == null)
+                {
+                    return NotFound($"Không tìm thấy Provider với ID: {providerId}.");
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình lấy chi tiết Provider.");
+            }
+        }
+    
     }
 }
