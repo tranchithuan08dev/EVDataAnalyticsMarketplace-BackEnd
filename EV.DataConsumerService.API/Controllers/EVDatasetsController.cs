@@ -116,5 +116,30 @@ namespace EV.DataConsumerService.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình xử lý giao dịch mua.");
             }
         }
+
+
+        [HttpPost("subscribe")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubscriptionResponseDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SubscribeDataset([FromBody] SubscriptionRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var response = await _datasetService.SubscribeDatasetAsync(request);
+
+                return CreatedAtAction(nameof(SubscribeDataset), response);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace EV.DataProviderService.API.Controllers;
 /// <summary>
 /// Controller quản lý Nhà cung cấp dữ liệu (Data Providers: hãng xe, trạm sạc, fleet operators, ...)
 /// </summary>
-[Route("api/[controller]")]
+[Route("DataProvider")]
 [ApiController]
 public class ProviderController : ControllerBase
 {

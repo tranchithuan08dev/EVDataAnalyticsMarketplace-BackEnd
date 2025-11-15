@@ -40,8 +40,23 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
                 errorNumbersToAdd: null); 
         });
 });
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
+// ... (ở đầu file Program.cs)
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          // ⭐️ Sử dụng AllowAnyOrigin() để cho phép mọi domain
+                          policy.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
 var app = builder.Build();
+app.UseCors(MyAllowSpecificOrigins);
 // Middleware Prometheus
 app.UseMetricServer();   // expose /metrics
 app.UseHttpMetrics();    // track HTTP metrics automatically

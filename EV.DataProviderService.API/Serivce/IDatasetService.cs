@@ -6,5 +6,6 @@ namespace EV.DataProviderService.API.Service
     public interface IDatasetService
     {
         Task<List<DatasetProviderListDto>> GetAllDatasetsAsync(Guid providerId);
+        Task<ProviderDatasetDetailDto> GetProviderDetailsWithDatasetsAsync(Guid providerId);
     }
 }

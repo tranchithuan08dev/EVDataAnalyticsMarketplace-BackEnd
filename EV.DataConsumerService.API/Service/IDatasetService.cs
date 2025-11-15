@@ -10,5 +10,7 @@ namespace EV.DataConsumerService.API.Service
         Task<IEnumerable<DatasetSearchDetailDto>> SearchDatasetsAsync(DatasetSearchRequestDto searchRequest);
 
         Task PurchaseDatasetAsync(PurchaseRequestDto purchaseRequest);
+
+        Task<SubscriptionResponseDto> SubscribeDatasetAsync(SubscriptionRequestDto request);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using EV.DataProviderService.API.Data.IRepositories;
+using EV.DataProviderService.API.Data.Repositories;
 using EV.DataProviderService.API.Models.DTOs;
 using EV.DataProviderService.API.Models.Entites;
 using Prometheus;
@@ -44,6 +45,29 @@ namespace EV.DataProviderService.API.Service
                     CreatedAt = d.CreatedAt
                 }).ToList();
             } 
+        }
+
+
+        public async Task<ProviderDatasetDetailDto> GetProviderDetailsWithDatasetsAsync(Guid providerId)
+        {
+            // 1. Lấy chi tiết Provider
+            var providerDetails = await _repository.GetProviderDetailsAsync(providerId);
+
+            if (providerDetails == null)
+            {
+                return null; // Không tìm thấy Provider
+            }
+
+            // 2. Lấy danh sách Datasets
+            // Chỉ lấy các Dataset mà Provider đã tạo
+            var datasets = await _repository.GetDatasetsByProviderIdAsync(providerId);
+
+            // 3. Tổng hợp kết quả
+            return new ProviderDatasetDetailDto
+            {
+                Provider = providerDetails,
+                Datasets = datasets
+            };
         }
     }
   }
