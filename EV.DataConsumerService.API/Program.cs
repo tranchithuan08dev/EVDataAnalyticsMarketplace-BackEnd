@@ -53,6 +53,23 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
 });
 
 
+    var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+    // ... (ở đầu file Program.cs)
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(name: MyAllowSpecificOrigins,
+                          policy =>
+                          {
+                              // ⭐️ Sử dụng AllowAnyOrigin() để cho phép mọi domain
+                              policy.AllowAnyOrigin()
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod();
+                          });
+    });
+
+
     // Trong khối builder.Services.AddOpenTelemetry()
 
     builder.Services.AddOpenTelemetry()
@@ -125,11 +142,11 @@ builder.Services.AddSwaggerGen();
 
 
 var app = builder.Build();
+    app.UseCors(MyAllowSpecificOrigins);
 
 
-
-// Middleware Prometheus
-app.UseMetricServer();   // expose /metrics
+    // Middleware Prometheus
+    app.UseMetricServer();   // expose /metrics
 app.UseHttpMetrics();    // track HTTP metrics automatically
 
 app.MapGet("/", () => "Hello Prometheus!");

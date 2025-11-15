@@ -1,6 +1,7 @@
 ﻿using EV.DataProviderService.API.Data;
 using EV.DataProviderService.API.Data.IRepositories;
 using EV.DataProviderService.API.Data.Repositories;
+using EV.DataProviderService.API.Repositories;
 using EV.DataProviderService.API.Service;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
@@ -8,16 +9,25 @@ using Prometheus;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+}
+
 // 1. Đăng ký Services & Repositories
 builder.Services.AddScoped<IDatasetRepository, DatasetRepository>();
 builder.Services.AddScoped<IDatasetService, DatasetService>();
+builder.Services.AddScoped<IRevenueRepository, RevenueRepository>(); 
+builder.Services.AddScoped<IRevenueService, RevenueService>();
+builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
+builder.Services.AddScoped<IProviderService, ProviderService>();
 // 2. Đăng ký DbContext với các tùy chọn cần thiết cho Docker
 builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
 {
@@ -30,8 +40,23 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
                 errorNumbersToAdd: null); 
         });
 });
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
+// ... (ở đầu file Program.cs)
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          // ⭐️ Sử dụng AllowAnyOrigin() để cho phép mọi domain
+                          policy.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
 var app = builder.Build();
+app.UseCors(MyAllowSpecificOrigins);
 // Middleware Prometheus
 app.UseMetricServer();   // expose /metrics
 app.UseHttpMetrics();    // track HTTP metrics automatically
@@ -40,14 +65,13 @@ app.MapGet("/", () => "Hello Prometheus!");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage(); 
+    app.UseSwagger();               
+    app.UseSwaggerUI(c =>
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "EV Data Provider API V1"));
 }
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
