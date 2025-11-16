@@ -10,6 +10,14 @@ namespace EV.AdminService.API.Repositories.Implements
         {
         }
 
+        public async Task<DatasetVersion?> GetLatestVersionByDatasetIdAsync(Guid datasetId, CancellationToken ct = default)
+        {
+            return await _dbSet.AsNoTracking()
+                .Where(v => v.DatasetId == datasetId)
+                .OrderByDescending(v => v.CreatedAt)
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
+        }
+
         public async Task<DatasetVersion?> GetPendingVersion(CancellationToken ct = default)
         {
             return await _dbSet.AsNoTracking()
