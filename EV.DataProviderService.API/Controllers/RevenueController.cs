@@ -3,7 +3,7 @@ using EV.DataProviderService.API.Service;
 
 namespace EV.DataProviderService.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class RevenueController : ControllerBase
     {
