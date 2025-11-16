@@ -221,23 +221,23 @@ namespace EV.AdminService.API.AI.Services.Implements
 
         public async Task<SuggestPricingModel> SuggestPricingAsync(AnalysisSummary summaryReport, CancellationToken ct = default)
         {
-            decimal baseValue = 50.0m;
-            baseValue += (decimal) (summaryReport.TotalTrips / 100.0m);
+            decimal baseValue = 5000.0m;
+            baseValue += (decimal) (summaryReport.TotalTrips / 10.0m) * 100.0m;
             if (summaryReport.MinBatteryTemp != 0)
             {
-                baseValue += 20.0m;
+                baseValue += 1000.0m;
             }
 
             if (summaryReport.PeakUsageHour >= 0 && summaryReport.PeakUsageHour <= 4)
             {
-                baseValue += 50.0m;
+                baseValue += 2000.0m;
             }
 
             await Task.Delay(150, ct).ConfigureAwait(false);
 
-            var suggestedBuyPrice = Math.Round(baseValue, 2);
+            var suggestedBuyPrice = Math.Round(baseValue, 0);
 
-            var suggestedRentPrice = Math.Round(baseValue * 5.0m, 2);
+            var suggestedRentPrice = Math.Round(baseValue * 3.0m, 0);
 
             return new SuggestPricingModel
             {
