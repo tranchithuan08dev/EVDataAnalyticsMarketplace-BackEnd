@@ -4,6 +4,7 @@ using EV.AdminService.API.AI.DataMap;
 using EV.AdminService.API.Models;
 using EV.AdminService.API.Repositories.Interfaces;
 using EV.AdminService.API.Services.Interfaces;
+using OfficeOpenXml;
 using System.Globalization;
 using System.Text.Json;
 
@@ -39,7 +40,7 @@ namespace EV.AdminService.API.AI.Services.BackgroundServices
                     }
 
                     _logger.LogInformation("Processing VersionId: {VersionId}", pendingVersion.DatasetVersionId);
-                    List<EVDataPoint> dataPoints = await LoadDataFromFileAsync(pendingVersion.StorageUri).ConfigureAwait(false);
+                    List<EVDataPoint> dataPoints = await LoadDataFromFileAsync(pendingVersion.StorageUri, pendingVersion.FileFormat, stoppingToken).ConfigureAwait(false);
                     if (!dataPoints.Any())
                     {
                         continue;
@@ -119,7 +120,7 @@ namespace EV.AdminService.API.AI.Services.BackgroundServices
             }
         }
 
-        private async Task<List<EVDataPoint>> LoadDataFromFileAsync(string fileUri)
+        private async Task<List<EVDataPoint>> LoadDataFromFileAsync(string fileUri, string fileFormat, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(fileUri))
             {
@@ -130,13 +131,60 @@ namespace EV.AdminService.API.AI.Services.BackgroundServices
             try
             {
                 _logger.LogInformation("Loading data from {Uri}", fileUri);
-                using var http = new System.Net.Http.HttpClient();
-                var csvContent = await http.GetStringAsync(fileUri).ConfigureAwait(false);
+                var http = new System.Net.Http.HttpClient();
+                using var stream = await http.GetStreamAsync(fileUri).ConfigureAwait(false);
 
-                using var reader = new StringReader(csvContent);
-                using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-                csv.Context.RegisterClassMap<EVDataPointMap>();
-                var records = csv.GetRecords<EVDataPoint>().ToList();
+                var records = new List<EVDataPoint>();
+
+                if (fileFormat.Equals("csv", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogInformation("Reading .csv file with CsvHelper...");
+
+                    using var reader = new StreamReader(stream);
+                    using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                    csv.Context.RegisterClassMap<EVDataPointMap>();
+                    records = csv.GetRecords<EVDataPoint>().ToList();
+                }
+                else if (fileFormat.Equals("xlsx", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogInformation("Reading .xlsx file with EPPlus...");
+                    using (var package = new ExcelPackage(stream))
+                    {
+                        var sheet = package.Workbook.Worksheets.FirstOrDefault();
+                        if (sheet == null)
+                        {
+                            _logger.LogWarning("No worksheet found in the Excel file.");
+                            return records;
+                        }
+
+                        int startRow = 2;
+                        for (int row = startRow; row <= sheet.Dimension.End.Row; row++)
+                        {
+                            try
+                            {
+                                var record = new EVDataPoint
+                                {
+                                    Timestamp = sheet.Cells[row, 1].GetValue<string>(),
+                                    SoC = sheet.Cells[row, 2].GetValue<float>(),
+                                    BatteryTemp = sheet.Cells[row, 3].GetValue<float>(),
+                                    Odometer = sheet.Cells[row, 4].GetValue<float>(),
+                                    DriverNotes = sheet.Cells[row, 5].GetValue<string>()
+                                };
+                                records.Add(record);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Lỗi đọc hàng {Row} từ file .xlsx.", row);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogError("Not supported file format: {Format}", fileFormat);
+                    return new List<EVDataPoint>();
+                }
+
                 _logger.LogInformation("Loaded {Count} records from {Uri}", records.Count, fileUri);
                 return records;
             }
