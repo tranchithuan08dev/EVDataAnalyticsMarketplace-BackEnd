@@ -110,11 +110,13 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
 
     // 1. Đăng ký Services & Repositories
     builder.Services.AddScoped<IDatasetRepository, DatasetRepository>();
-builder.Services.AddScoped<IDatasetService, DatasetService>();
-// builder.Services.AddDbContext<ApplicationDbContext>(/*...*/);
+    builder.Services.AddScoped<IDatasetService, DatasetService>();
+    builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+    builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+    // builder.Services.AddDbContext<ApplicationDbContext>(/*...*/);
 
-// 2. Tạo EdmModel cho OData
-var modelBuilder = new ODataConventionModelBuilder();
+    // 2. Tạo EdmModel cho OData
+    var modelBuilder = new ODataConventionModelBuilder();
 modelBuilder.EntitySet<DatasetSearchResultDto>("Datasets");
 
 
