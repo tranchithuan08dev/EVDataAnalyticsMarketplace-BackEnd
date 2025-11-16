@@ -113,6 +113,8 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
     builder.Services.AddScoped<IDatasetService, DatasetService>();
     builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
     builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
+    builder.Services.AddScoped<IUserService, UserService>();
     // builder.Services.AddDbContext<ApplicationDbContext>(/*...*/);
 
     // 2. Tạo EdmModel cho OData
