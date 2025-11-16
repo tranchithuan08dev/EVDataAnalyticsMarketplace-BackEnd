@@ -7,5 +7,7 @@ namespace EV.DataProviderService.API.Service
     {
         Task<List<DatasetProviderListDto>> GetAllDatasetsAsync(Guid providerId);
         Task<ProviderDatasetDetailDto> GetProviderDetailsWithDatasetsAsync(Guid providerId);
+
+        Task<DatasetDetailFullDto> GetDetailDatasetAsync(Guid datasetId);
     }
 }

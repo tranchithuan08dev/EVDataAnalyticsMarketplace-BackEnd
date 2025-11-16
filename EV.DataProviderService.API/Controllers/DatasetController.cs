@@ -64,6 +64,39 @@ namespace EV.DataProviderService.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình lấy chi tiết Provider.");
             }
         }
-    
+
+
+        /// <summary>
+        /// Lấy chi tiết đầy đủ của một Dataset, bao gồm tất cả Versions và DataFiles.
+        /// </summary>
+        /// <param name="datasetId">ID của Dataset.</param>
+        [HttpGet("{datasetId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DatasetDetailFullDto))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetDetailDataset(Guid datasetId)
+        {
+            if (datasetId == Guid.Empty)
+            {
+                return BadRequest("Dataset ID không hợp lệ.");
+            }
+
+            try
+            {
+                var result = await _service.GetDetailDatasetAsync(datasetId);
+
+                if (result == null)
+                {
+                    return NotFound($"Không tìm thấy Dataset với ID: {datasetId}.");
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi server trong quá trình lấy chi tiết Dataset.");
+            }
+        }
+
     }
 }
