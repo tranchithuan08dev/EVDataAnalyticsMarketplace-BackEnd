@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using EV.DataProviderService.API.Service;
+using System;
 
 namespace EV.DataProviderService.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class RevenueController : ControllerBase
     {
@@ -14,10 +15,10 @@ namespace EV.DataProviderService.API.Controllers
             _revenueService = revenueService;
         }
 
-        [HttpGet("{providerId}")]
-        public async Task<IActionResult> GetRevenueReport(Guid providerId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        [HttpGet("dashboard/{providerId}")]
+        public async Task<IActionResult> GetRevenueReport(Guid providerId)
         {
-            var report = await _revenueService.GetRevenueReportAsync(providerId, startDate, endDate);
+            var report = await _revenueService.GetRevenueReportAsync(providerId);
             return Ok(report);
         }
     }
