@@ -1,4 +1,5 @@
-﻿using EV.AdminService.API.AI.Services.Implements;
+﻿using Amazon.S3;
+using EV.AdminService.API.AI.Services.Implements;
 using EV.AdminService.API.AI.Services.Interfaces;
 using EV.AdminService.API.Repositories.Interfaces;
 using EV.AdminService.API.Services.Interfaces;
@@ -11,6 +12,7 @@ namespace EV.AdminService.API.Services.Implements
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IAmazonS3 _s3Client;
         private readonly MLContext _mlContext;
         private IUserService? _userService;
         private IOrganizationService? _organizationService;
@@ -22,13 +24,15 @@ namespace EV.AdminService.API.Services.Implements
         private IRoleService? _roleService;
         private IPolicyService? _policyService;
         private ISubscriptionService? _subscriptionService;
+        private IProviderImportService? _providerImportService;
 
-        public ServicesProvider(IUnitOfWork unitOfWork, MLContext mlContext, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public ServicesProvider(IUnitOfWork unitOfWork, MLContext mlContext, IConfiguration configuration, IHttpClientFactory httpClientFactory, IAmazonS3 s3Client)
         {
             _unitOfWork = unitOfWork;
             _mlContext = mlContext;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _s3Client = s3Client;
         }
         public IUserService UserService => _userService ??= new UserService(_unitOfWork);
         public IOrganizationService OrganizationService => _organizationService ??= new OrganizationService(_unitOfWork);
@@ -40,5 +44,6 @@ namespace EV.AdminService.API.Services.Implements
         public IRoleService RoleService => _roleService ??= new RoleService(_unitOfWork);
         public IPolicyService PolicyService => _policyService ??= new PolicyService(_unitOfWork);
         public ISubscriptionService SubscriptionService => _subscriptionService ??= new SubscriptionService(_unitOfWork);
+        public IProviderImportService ProviderImportService => _providerImportService ??= new ProviderImportService(_unitOfWork, _s3Client, _configuration);
     }
 }
