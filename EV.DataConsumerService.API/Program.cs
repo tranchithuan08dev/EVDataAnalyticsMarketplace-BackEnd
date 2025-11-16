@@ -4,15 +4,18 @@ using EV.DataConsumerService.API.Data.Repositories;
 using EV.DataConsumerService.API.Models.DTOs;
 using EV.DataConsumerService.API.Models.Entities;
 using EV.DataConsumerService.API.Service;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.ModelBuilder;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Instrumentation.Http;
 using Prometheus;
 using Serilog;
+using System.Text;
 
 // ========================================
 // 1. CẤU HÌNH SERILOG
@@ -137,11 +140,27 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+    // Đăng ký Repository và Service
+    builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+    builder.Services.AddScoped<IAuthService, AuthService>();
 
+    // Cấu hình JWT Authentication
+    var tokenKey = builder.Configuration.GetSection("AppSettings:Token").Value;
 
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
+                    .GetBytes(tokenKey)),
+                ValidateIssuer = false, // Không cần kiểm tra Issuer
+                ValidateAudience = false // Không cần kiểm tra Audience
+            };
+        });
 
-
-var app = builder.Build();
+    var app = builder.Build();
     app.UseCors(MyAllowSpecificOrigins);
 
 
