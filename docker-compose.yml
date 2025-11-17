@@ -97,7 +97,7 @@ services:
     container_name: prometheus
     volumes:
       # Gắn tệp cấu hình Prometheus (cần tạo: monitoring/prometheus.yml) SỬA
-      - D:/FPT_FALL25/PRN232/EVDataAnalyticsMarketplace-BackEnd/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - D:/EVData/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
@@ -121,7 +121,7 @@ services:
       - prometheus
     volumes:
       # Gắn thư mục provisioning để Grafana tự động cấu hình Data Source
-        - D:/FPT_FALL25/PRN232/EVDataAnalyticsMarketplace-BackEnd/datasources.yml:/etc/grafana/provisioning/datasources/datasource:ro
+        - D:/EVData/datasources.yml:/etc/grafana/provisioning/datasources/datasource:ro
 networks:
   ev_network:
     driver: bridge
