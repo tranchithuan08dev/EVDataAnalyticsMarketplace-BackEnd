@@ -22,15 +22,29 @@ namespace EV.AdminService.API.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreatePaymentRequest([FromBody] CreatePaymentRequestDTO request, CancellationToken ct)
         {
-            var orgIdClaim = User.FindFirstValue("OrganizationId");
-            if (!Guid.TryParse(orgIdClaim, out var consumerOrgId))
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
             {
-                return Unauthorized("Token không hợp lệ hoặc thiếu OrganizationId.");
+                return Unauthorized("Token không hợp lệ hoặc không chứa OrganizationId.");
+            }
+
+            var user = await _servicesProvider.UserService.GetUserByIdAsync(userId, ct).ConfigureAwait(false);
+
+            if (user == null || user.OrganizationId == null)
+            {
+                return Unauthorized("Không tìm thấy thông tin tổ chức (Organization) liên kết với tài khoản của bạn.");
+            }
+
+            var organization = await _servicesProvider.OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value, ct).ConfigureAwait(false);
+
+            if (organization == null || organization.Consumer == null)
+            {
+                return Unauthorized("Không tìm thấy tổ chức (Organization) Consumer của bạn.");
             }
 
             try
             {
-                var result = await _servicesProvider.PaymentService.CreatePaymentRequestAsync(request, consumerOrgId, ct);
+                var result = await _servicesProvider.PaymentService.CreatePaymentRequestAsync(request, organization.OrganizationId, ct);
 
                 return Ok(result);
             }
