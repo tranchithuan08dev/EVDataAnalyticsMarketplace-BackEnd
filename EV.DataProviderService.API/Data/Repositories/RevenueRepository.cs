@@ -16,30 +16,42 @@ namespace EV.DataProviderService.API.Repositories
             _context = context;
         }
 
-        public async Task<RevenueReportDto> GetRevenueReportAsync(Guid providerId, DateTime? startDate, DateTime? endDate)
+        public async Task<RevenueReportDto> GetRevenueReportAsync(Guid providerId)
         {
-            var query = from p in _context.Purchases
-                        join dv in _context.DatasetVersions on p.DatasetVersionId equals dv.DatasetVersionId
-                        join d in _context.Datasets on dv.DatasetId equals d.DatasetId
-                        join o in _context.Organizations on p.ConsumerOrgId equals o.OrganizationId
-                        where d.ProviderId == providerId
-                        select new { p, dv, d, o };
+            var datasets = await _context.Datasets
+                .Where(d => d.ProviderId == providerId)
+                .Include(d => d.DatasetVersions)
+                    .ThenInclude(dv => dv.Purchases)
+                .ToListAsync();
 
-            if (startDate.HasValue) query = query.Where(x => x.p.PurchasedAt >= startDate.Value);
-            if (endDate.HasValue) query = query.Where(x => x.p.PurchasedAt <= endDate.Value);
+            var totalRevenue = datasets
+                .SelectMany(d => d.DatasetVersions)
+                .SelectMany(dv => dv.Purchases)
+                .Sum(p => p.Price);
 
-            var result = await query
-                .GroupBy(x => 1)
-                .Select(g => new RevenueReportDto
+            var totalDownloads = datasets
+                .SelectMany(d => d.DatasetVersions)
+                .Sum(dv => dv.Purchases.Count);
+
+            var recentDatasets = datasets
+                .OrderByDescending(d => d.CreatedAt)
+                .Take(10)
+                .Select(d => new RevenueSummaryItemDto
                 {
-                    ReportDate = DateTime.Now,
-                    DownloadCount = g.Count(), 
-                    TotalRevenue = g.Sum(x => x.p.Price), 
-                    ConsumerDetails = string.Join(", ", g.Select(x => x.o.Name)) 
+                    DatasetTitle = d.Title,
+                    DownloadCount = d.DatasetVersions.Sum(dv => dv.Purchases.Count),
+                    Revenue = d.DatasetVersions.SelectMany(dv => dv.Purchases).Sum(p => p.Price),
+                    Status = d.Status == "approved" ? "Đã duyệt" : "Chờ duyệt"
                 })
-                .FirstOrDefaultAsync();
+                .ToList();
 
-            return result ?? new RevenueReportDto();
+            return new RevenueReportDto
+            {
+                TotalDownloadCount = totalDownloads,
+                TotalRevenue = totalRevenue,
+                TotalDatasets = datasets.Count,
+                RecentDatasets = recentDatasets
+            };
         }
     }
 }

@@ -4,9 +4,11 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>d889e535-c34a-461f-825d-79708a003491</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.11.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <PrivateAssets>all</PrivateAssets>
@@ -24,7 +26,6 @@
   <ItemGroup>
     <Folder Include="Data\IRepositories\" />
     <Folder Include="Data\Repositories\" />
-    <Folder Include="Serivce\" />
   </ItemGroup>
 
 </Project>

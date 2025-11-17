@@ -26,6 +26,8 @@ builder.Services.AddScoped<IDatasetRepository, DatasetRepository>();
 builder.Services.AddScoped<IDatasetService, DatasetService>();
 builder.Services.AddScoped<IRevenueRepository, RevenueRepository>(); 
 builder.Services.AddScoped<IRevenueService, RevenueService>();
+builder.Services.AddScoped<IAnonymizationRepository, AnonymizationRepository>();
+builder.Services.AddScoped<IAnonymizationService, AnonymizationService>();
 builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
 builder.Services.AddScoped<IProviderService, ProviderService>();
 // 2. Đăng ký DbContext với các tùy chọn cần thiết cho Docker

@@ -1,5 +1,4 @@
 ﻿using EV.AdminService.API.DTOs.DataModels;
-using EV.AdminService.API.DTOs.Requests;
 using EV.AdminService.API.Models;
 using EV.AdminService.API.Repositories.Basics;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,14 @@ namespace EV.AdminService.API.Repositories.Implements
     {
         public PaymentRepository(EVDataAnalyticsMarketplaceDBContext context) : base(context)
         {
+        }
+
+        public async Task<Payment?> GetPaymentByReferenceAsync(string referenceCode, CancellationToken ct = default)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.TransactionReference == referenceCode, ct)
+                .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<PaymentDTO>> GetPendingPaymentsAsync(CancellationToken ct = default)

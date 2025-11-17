@@ -1,4 +1,5 @@
 ﻿using EV.AdminService.API.DTOs.DataModels;
+using EV.AdminService.API.Models;
 using EV.AdminService.API.Repositories.Interfaces;
 using EV.AdminService.API.Services.Interfaces;
 
@@ -10,6 +11,11 @@ namespace EV.AdminService.API.Services.Implements
         public UserService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default)
+        {
+            return await _unitOfWork.UserRepository.GetByIdAsync(ct, userId).ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<UserDetailDTO>> GetUsersAsync(CancellationToken ct = default)
