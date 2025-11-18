@@ -1,11 +1,12 @@
 ﻿using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using EV.AdminService.API.DTOs.DataModels;
+using EV.AdminService.API.DTOs.Requests;
 using EV.AdminService.API.Models;
 using EV.AdminService.API.Repositories.Interfaces;
 using EV.AdminService.API.Services.Interfaces;
 using OfficeOpenXml;
-using System.IO;
 
 namespace EV.AdminService.API.Services.Implements
 {
@@ -20,53 +21,96 @@ namespace EV.AdminService.API.Services.Implements
             _s3Client = s3Client;
             _configuration = configuration;
         }
+
+        public async Task<Guid> CreateDatasetAsync(CreateDatasetRequest request, Guid providerId, CancellationToken ct)
+        {
+            string storageUri = string.Empty;
+            var safeFileName = Path.GetFileName(request.DataFile.FileName);
+            var fileKey = $"evdata/provider_{providerId}/{Guid.NewGuid()}/{safeFileName}";
+            var bucketName = _configuration["CloudflareR2:BucketName"];
+
+            try
+            {
+                if (request.DataFile.Length > 0)
+                {
+                    using var stream = request.DataFile.OpenReadStream();
+
+                    var putRequest = new PutObjectRequest
+                    {
+                        BucketName = bucketName,
+                        Key = fileKey,
+                        InputStream = stream,
+                        DisablePayloadSigning = true,
+                    };
+
+                    if (!string.IsNullOrEmpty(request.DataFile.ContentType))
+                    {
+                        putRequest.ContentType = request.DataFile.ContentType;
+                    }
+
+                    await _s3Client.PutObjectAsync(putRequest, ct).ConfigureAwait(false);
+
+                    storageUri = $"{_configuration["CloudflareR2:EndpointUrl"]}/{bucketName}/{fileKey}";
+                }
+            }
+            catch (AmazonS3Exception s3Ex)
+            {
+                throw new InvalidOperationException($"Lỗi kết nối R2: {s3Ex.Message}", s3Ex);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Upload file thất bại.", ex);
+            }
+
+            var newDatasetId = Guid.NewGuid();
+
+            var newDataset = new Dataset
+            {
+                DatasetId = newDatasetId,
+                ProviderId = providerId,
+                Title = request.Title,
+                ShortDescription = request.ShortDescription,
+                Category = request.Category,
+                Region = request.Region,
+                VehicleTypes = request.VehicleTypes,
+                CreatedAt = DateTime.UtcNow,
+                Status = "pending",
+                Visibility = "private"
+            };
+
+            await _unitOfWork.DatasetRepository.CreateAsync(newDataset, ct);
+
+            var newVersion = new DatasetVersion
+            {
+                DatasetVersionId = Guid.NewGuid(),
+                DatasetId = newDatasetId,
+                VersionLabel = request.VersionLabel,
+                FileFormat = Path.GetExtension(request.DataFile.FileName).TrimStart('.'),
+                StorageUri = storageUri,
+                CreatedAt = DateTime.UtcNow,
+                IsAnalyzed = false,
+                SubscriptionRequired = false
+            };
+
+            await _unitOfWork.DatasetVersionRepository.CreateAsync(newVersion, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return newDatasetId;
+        }
+
         public async Task<Guid> ImportNewDatasetAsync(IFormFile metadataFile, IFormFile dataFile, Guid providerId, CancellationToken ct)
         {
             string storageUri = string.Empty;
             var fileKey = $"evdata/provider_{providerId}/{Guid.NewGuid()}/{dataFile.FileName}";
             var bucketName = _configuration["CloudflareR2:BucketName"];
 
-            //try
-            //{
-            //    var fileTransferUtility = new TransferUtility(_s3Client);
-            //    await using var stream = dataFile.OpenReadStream();
-            //    await fileTransferUtility.UploadAsync(stream, bucketName, fileKey, ct).ConfigureAwait(false);
-
-            //    storageUri = $"{_configuration["CloudflareR2:EndpointUrl"]}/{bucketName}/{fileKey}";
-            //}
-            //catch (Exception ex)
-            //{
-            //    throw new InvalidOperationException("Upload file dữ liệu thất bại.", ex);
-            //}
-
-            // ... bên trong hàm ImportNewDatasetAsync ...
-
             try
             {
-                await using var stream = dataFile.OpenReadStream();
-                if (stream.CanSeek)
-                {
-                    stream.Position = 0;
-                }
-
-                var uploadRequest = new TransferUtilityUploadRequest
-                {
-                    InputStream = stream,
-                    Key = fileKey,
-                    BucketName = bucketName,
-                    AutoCloseStream = false,
-                    CannedACL = S3CannedACL.Private
-                };
-
                 var fileTransferUtility = new TransferUtility(_s3Client);
-
-                await fileTransferUtility.UploadAsync(uploadRequest, ct).ConfigureAwait(false);
+                await using var stream = dataFile.OpenReadStream();
+                await fileTransferUtility.UploadAsync(stream, bucketName, fileKey, ct).ConfigureAwait(false);
 
                 storageUri = $"{_configuration["CloudflareR2:EndpointUrl"]}/{bucketName}/{fileKey}";
-            }
-            catch (AmazonS3Exception s3Ex)
-            {
-                throw new InvalidOperationException($"Lỗi từ phía Cloudflare R2: {s3Ex.Message}", s3Ex);
             }
             catch (Exception ex)
             {
@@ -97,11 +141,8 @@ namespace EV.AdminService.API.Services.Implements
                 throw new InvalidOperationException("File metadata (.xlsx) không đúng định dạng hoặc thiếu sheet.", ex);
             }
 
-            var newDatasetId = Guid.NewGuid();
-
             var newDataset = new Dataset
             {
-                DatasetId = newDatasetId,
                 ProviderId = providerId,
                 Title = datasetDto.Title,
                 ShortDescription = datasetDto.ShortDescription,
@@ -117,8 +158,7 @@ namespace EV.AdminService.API.Services.Implements
 
             var newVersion = new DatasetVersion
             {
-                DatasetVersionId = Guid.NewGuid(),
-                DatasetId = newDatasetId,
+                DatasetId = newDataset.DatasetId,
                 VersionLabel = versionDto.VersionLabel,
                 FileFormat = versionDto.FileFormat,
                 StorageUri = storageUri,

@@ -15,6 +15,51 @@ namespace EV.AdminService.API.Controllers
             _servicesProvider = servicesProvider;
         }
 
+        [HttpPost("create")]
+        [RequestSizeLimit(5_368_709_120)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5_368_709_120)]
+        public async Task<IActionResult> CreateDataset([FromForm] CreateDatasetRequest request, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized("Token không hợp lệ.");
+            }
+
+            var user = await _servicesProvider.UserService.GetUserByIdAsync(userId, ct).ConfigureAwait(false);
+
+            if (user == null || user.OrganizationId == null)
+            {
+                return Unauthorized("Không tìm thấy thông tin tổ chức (Organization) liên kết với tài khoản của bạn.");
+            }
+
+            var providerId = user.OrganizationId.Value;
+
+            try
+            {
+                var newDatasetId = await _servicesProvider.ProviderImportService.CreateDatasetAsync(request, providerId, ct);
+
+                return Ok(new
+                {
+                    Message = "Tạo dataset thành công! Dữ liệu đang được AI xử lý (kiểm duyệt & định giá).",
+                    DatasetId = newDatasetId
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Đã xảy ra lỗi máy chủ.", Error = ex.Message });
+            }
+        }
+
         [HttpPost("new-dataset")]
         [RequestSizeLimit(5_368_709_120)] // 5 GB
         [RequestFormLimits(MultipartBodyLengthLimit = 5_368_709_120)]
