@@ -10,6 +10,13 @@ namespace EV.AdminService.API.Repositories.Implements
         {
         }
 
+        public async Task<bool> HasPurchasedVersionAsync(Guid organizationId, Guid datasetVersionId, CancellationToken ct)
+        {
+            return await _dbSet.AsNoTracking()
+                .AnyAsync(p => p.ConsumerOrgId == organizationId && p.DatasetVersionId == datasetVersionId, ct)
+                .ConfigureAwait(false);
+        }
+
         public async Task<Dictionary<Guid, (Guid DatasetId, string Title, int PurchaseCount)>> GetPurchaseCountsAsync(CancellationToken ct = default)
         {
             var purchaseCounts = await _dbSet.AsNoTracking().Include(p => p.DatasetVersion.Dataset)

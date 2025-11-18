@@ -11,6 +11,16 @@ namespace EV.AdminService.API.Repositories.Implements
         {
         }
 
+        public async Task<bool> HasActiveSubscriptionAsync(Guid organizationId, Guid datasetId, CancellationToken ct)
+        {
+            return await _dbSet.AsNoTracking()
+                .AnyAsync(s => s.ConsumerOrgId == organizationId &&
+                               s.DatasetId == datasetId &&
+                               s.Active == true &&
+                               (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow), ct)
+                .ConfigureAwait(false);
+        }
+
         public async Task<Dictionary<Guid, int>> GetSubsciptionCountsAsync(CancellationToken ct = default)
         {
             var subCounts = await _dbSet.AsNoTracking().Include(s => s.Dataset)

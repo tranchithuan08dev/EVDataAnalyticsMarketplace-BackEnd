@@ -11,6 +11,13 @@ namespace EV.AdminService.API.Repositories.Implements
         {
         }
 
+        public async Task<ApiKey?> GetByKeyHashAsync(byte[] keyHash, CancellationToken ct = default)
+        {
+            return await _dbSet.AsNoTracking()
+                               .FirstOrDefaultAsync(k => k.KeyHash == keyHash, ct)
+                               .ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<ApiKeyDTO>> GetActiveApiKeysAsync(CancellationToken ct = default)
         {
             var apikeys = await _dbSet.AsNoTracking().Where(k => !k.Revoked).Include(k => k.Organization)

@@ -15,5 +15,6 @@ namespace EV.AdminService.API.Services.Interfaces
         IPolicyService PolicyService { get; }
         ISubscriptionService SubscriptionService { get; }
         IProviderImportService ProviderImportService { get; }
+        IDataConsumerService DataConsumerService { get; }
     }
 }

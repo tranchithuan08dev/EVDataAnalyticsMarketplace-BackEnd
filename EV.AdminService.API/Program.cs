@@ -2,11 +2,13 @@
 using EV.AdminService.API.AI.Services.BackgroundServices;
 using EV.AdminService.API.AI.Services.Implements;
 using EV.AdminService.API.AI.Services.Interfaces;
+using EV.AdminService.API.Middleware;
 using EV.AdminService.API.Models;
 using EV.AdminService.API.Repositories.Implements;
 using EV.AdminService.API.Repositories.Interfaces;
 using EV.AdminService.API.Services.Implements;
 using EV.AdminService.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -77,6 +79,7 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IProviderImportService, ProviderImportService>();
+builder.Services.AddScoped<IDataConsumerService, DataConsumerService>();
 
 builder.Services.AddControllers();
 
@@ -85,7 +88,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication()
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>("ApiKeyScheme", null)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -103,6 +107,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
+    options.AddPolicy("ApiKeyPolicy", policy =>
+    {
+        policy.AddAuthenticationSchemes("ApiKeyScheme");
+        policy.RequireAuthenticatedUser();
+    });
 });
 
 builder.Services.AddSingleton<MLContext>();

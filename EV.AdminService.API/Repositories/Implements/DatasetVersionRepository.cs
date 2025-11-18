@@ -1,4 +1,5 @@
-﻿using EV.AdminService.API.Models;
+﻿using EV.AdminService.API.DTOs.DataModels;
+using EV.AdminService.API.Models;
 using EV.AdminService.API.Repositories.Basics;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,21 @@ namespace EV.AdminService.API.Repositories.Implements
     {
         public DatasetVersionRepository(EVDataAnalyticsMarketplaceDBContext context) : base(context)
         {
+        }
+
+        public async Task<IEnumerable<DatasetVersionMetadataDTO>> GetApprovedVersionsAsync(Guid datasetId, CancellationToken ct = default)
+        {
+            return await _dbSet.AsNoTracking()
+                .Where(v => v.DatasetId == datasetId && v.Dataset.Status == "approved")
+                .OrderByDescending(v => v.CreatedAt)
+                .Select(v => new DatasetVersionMetadataDTO
+                {
+                    DatasetVersionId = v.DatasetVersionId,
+                    VersionLabel = v.VersionLabel,
+                    FileFormat = v.FileFormat,
+                    CreatedAt = v.CreatedAt,
+                })
+                .ToListAsync(ct);
         }
 
         public async Task<DatasetVersion?> GetLatestVersionByDatasetIdAsync(Guid datasetId, CancellationToken ct = default)
