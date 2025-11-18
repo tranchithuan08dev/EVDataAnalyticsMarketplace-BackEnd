@@ -28,7 +28,7 @@ namespace EV.AdminService.API.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdClaim, out var userId))
             {
-                return Unauthorized("Token không hợp lệ.");
+                return Unauthorized("Token không hợp lệ hoặc không chứa OrganizationId.");
             }
 
             var user = await _servicesProvider.UserService.GetUserByIdAsync(userId, ct).ConfigureAwait(false);
@@ -38,7 +38,14 @@ namespace EV.AdminService.API.Controllers
                 return Unauthorized("Không tìm thấy thông tin tổ chức (Organization) liên kết với tài khoản của bạn.");
             }
 
-            var providerId = user.OrganizationId.Value;
+            var organization = await _servicesProvider.OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value, ct).ConfigureAwait(false);
+
+            if (organization == null || organization.Provider == null)
+            {
+                return Unauthorized("Không tìm thấy tổ chức (Organization) Provider của bạn.");
+            }
+
+            var providerId = organization.Provider.ProviderId;
 
             try
             {
@@ -70,27 +77,27 @@ namespace EV.AdminService.API.Controllers
                 return BadRequest("Cần cả 2 file: 'metadataFile' (xlsx) và 'dataFile' (csv).");
             }
 
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                return Unauthorized("Token không hợp lệ hoặc không chứa OrganizationId.");
-            }
+            //var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //if (!Guid.TryParse(userIdClaim, out var userId))
+            //{
+            //    return Unauthorized("Token không hợp lệ hoặc không chứa OrganizationId.");
+            //}
 
-            var user = await _servicesProvider.UserService.GetUserByIdAsync(userId, ct).ConfigureAwait(false);
+            //var user = await _servicesProvider.UserService.GetUserByIdAsync(userId, ct).ConfigureAwait(false);
 
-            if (user == null || user.OrganizationId == null)
-            {
-                return Unauthorized("Không tìm thấy thông tin tổ chức (Organization) liên kết với tài khoản của bạn.");
-            }
+            //if (user == null || user.OrganizationId == null)
+            //{
+            //    return Unauthorized("Không tìm thấy thông tin tổ chức (Organization) liên kết với tài khoản của bạn.");
+            //}
 
-            var organization = await _servicesProvider.OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value, ct).ConfigureAwait(false);
+            //var organization = await _servicesProvider.OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value, ct).ConfigureAwait(false);
 
-            if (organization == null || organization.Provider == null)
-            {
-                return Unauthorized("Không tìm thấy tổ chức (Organization) Provider của bạn.");
-            }
+            //if (organization == null || organization.Provider == null)
+            //{
+            //    return Unauthorized("Không tìm thấy tổ chức (Organization) Provider của bạn.");
+            //}
 
-            var providerId = organization.Provider.ProviderId;
+            var providerId = Guid.Parse("8d1e6cec-3210-4e53-891e-188c326738f9");//organization.Provider.ProviderId;
 
             try
             {

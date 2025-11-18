@@ -1,4 +1,6 @@
-﻿using CsvHelper;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using CsvHelper;
 using EV.AdminService.API.AI.Data;
 using EV.AdminService.API.AI.DataMap;
 using EV.AdminService.API.Models;
@@ -6,6 +8,7 @@ using EV.AdminService.API.Repositories.Interfaces;
 using EV.AdminService.API.Services.Interfaces;
 using OfficeOpenXml;
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 
 namespace EV.AdminService.API.AI.Services.BackgroundServices
@@ -13,12 +16,14 @@ namespace EV.AdminService.API.AI.Services.BackgroundServices
     public class DataQualityProcessor : BackgroundService
     {
         private readonly ILogger<DataQualityProcessor> _logger;
+        private readonly IAmazonS3 _s3Client;
         private readonly IServiceProvider _serviceProvider;
 
-        public DataQualityProcessor(ILogger<DataQualityProcessor> logger, IServiceProvider serviceProvider)
+        public DataQualityProcessor(ILogger<DataQualityProcessor> logger, IServiceProvider serviceProvider, IAmazonS3 s3Client)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
+            _s3Client = s3Client;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -130,18 +135,31 @@ namespace EV.AdminService.API.AI.Services.BackgroundServices
 
             try
             {
-                _logger.LogInformation("Loading data from {Uri}", fileUri);
-                var http = new System.Net.Http.HttpClient();
-                using var stream = await http.GetStreamAsync(fileUri).ConfigureAwait(false);
+                _logger.LogInformation("Loading data from {Uri} using IAmazonS3 client...", fileUri);
+
+                var uri = new Uri(fileUri);
+                var pathSegments = uri.AbsolutePath.Trim('/').Split('/');
+
+                var bucketName = pathSegments[0];
+                var fileKey = string.Join("/", pathSegments.Skip(1));
+
+                var request = new GetObjectRequest
+                {
+                    BucketName = bucketName,
+                    Key = fileKey
+                };
+
+                using var response = await _s3Client.GetObjectAsync(request, ct).ConfigureAwait(false);
+                using var stream = response.ResponseStream;
 
                 var records = new List<EVDataPoint>();
 
                 if (fileFormat.Equals("csv", StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogInformation("Reading .csv file with CsvHelper...");
-
-                    using var reader = new StreamReader(stream);
+                    using var reader = new StreamReader(stream, Encoding.UTF8);
                     using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                    // ... (Code CsvHelper) ...
                     csv.Context.RegisterClassMap<EVDataPointMap>();
                     records = csv.GetRecords<EVDataPoint>().ToList();
                 }
@@ -187,6 +205,11 @@ namespace EV.AdminService.API.AI.Services.BackgroundServices
 
                 _logger.LogInformation("Loaded {Count} records from {Uri}", records.Count, fileUri);
                 return records;
+            }
+            catch (AmazonS3Exception s3Ex)
+            {
+                _logger.LogError(s3Ex, "LỖI S3 KHI TẢI XUỐNG: File không thể truy cập (403 Forbidden). Rsp: {Msg}", s3Ex.Message);
+                return new List<EVDataPoint>();
             }
             catch (Exception ex)
             {

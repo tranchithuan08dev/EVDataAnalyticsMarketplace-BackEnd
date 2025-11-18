@@ -106,11 +106,28 @@ namespace EV.AdminService.API.Services.Implements
 
             try
             {
-                var fileTransferUtility = new TransferUtility(_s3Client);
-                await using var stream = dataFile.OpenReadStream();
-                await fileTransferUtility.UploadAsync(stream, bucketName, fileKey, ct).ConfigureAwait(false);
+                if (dataFile.Length > 0)
+                {
+                    await using var stream = dataFile.OpenReadStream();
 
-                storageUri = $"{_configuration["CloudflareR2:EndpointUrl"]}/{bucketName}/{fileKey}";
+                    if (stream.CanSeek)
+                    {
+                        stream.Position = 0;
+                    }
+
+                    var putRequest = new PutObjectRequest
+                    {
+                        BucketName = bucketName,
+                        Key = fileKey,
+                        InputStream = stream,
+                        DisablePayloadSigning = true,
+                        ContentType = dataFile.ContentType
+                    };
+
+                    await _s3Client.PutObjectAsync(putRequest, ct).ConfigureAwait(false);
+
+                    storageUri = $"{_configuration["CloudflareR2:EndpointUrl"]}/{bucketName}/{fileKey}";
+                }
             }
             catch (Exception ex)
             {
@@ -141,8 +158,12 @@ namespace EV.AdminService.API.Services.Implements
                 throw new InvalidOperationException("File metadata (.xlsx) không đúng định dạng hoặc thiếu sheet.", ex);
             }
 
+            var newDatasetId = Guid.NewGuid();
+            var newVersionId = Guid.NewGuid();
+
             var newDataset = new Dataset
             {
+                DatasetId = newDatasetId,
                 ProviderId = providerId,
                 Title = datasetDto.Title,
                 ShortDescription = datasetDto.ShortDescription,
@@ -158,9 +179,10 @@ namespace EV.AdminService.API.Services.Implements
 
             var newVersion = new DatasetVersion
             {
-                DatasetId = newDataset.DatasetId,
+                DatasetVersionId = newVersionId,
+                DatasetId = newDatasetId,
                 VersionLabel = versionDto.VersionLabel,
-                FileFormat = versionDto.FileFormat,
+                FileFormat = Path.GetExtension(dataFile.FileName).TrimStart('.'),
                 StorageUri = storageUri,
                 CreatedAt = DateTime.UtcNow,
                 IsAnalyzed = false,
@@ -168,8 +190,9 @@ namespace EV.AdminService.API.Services.Implements
             };
 
             await _unitOfWork.DatasetVersionRepository.CreateAsync(newVersion, ct);
+
             await _unitOfWork.SaveChangesAsync(ct);
-            
+
             return newDataset.DatasetId;
         }
     }
