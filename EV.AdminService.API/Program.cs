@@ -58,6 +58,7 @@ var s3Client = new AmazonS3Client(
     new AmazonS3Config
     {
         ServiceURL = r2Config["EndpointUrl"],
+        AuthenticationRegion = "us-east-1",
         ForcePathStyle = true
     }
 );
@@ -100,6 +101,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// CORS để Gateway gọi qua được
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowGateway",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
@@ -120,7 +131,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
-
+// ✅ Cho phép CORS
+app.UseCors("AllowGateway");
 app.UseAuthentication();
 app.UseAuthorization();
 

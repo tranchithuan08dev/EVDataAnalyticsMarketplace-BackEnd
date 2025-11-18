@@ -69,7 +69,7 @@ builder.Services.AddDbContext<EvdataAnalyticsMarketplaceDbContext>(options =>
                               policy.AllowAnyOrigin()
                                     .AllowAnyHeader()
                                     .AllowAnyMethod();
-                          });
+        });
     });
 
 
@@ -129,19 +129,22 @@ builder.Services.AddControllers()
     .Select().Filter().OrderBy().Expand().Count().SetMaxTop(null)
     .AddRouteComponents("odata", modelBuilder.GetEdmModel()));
 
-// CORS để Gateway gọi qua được
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowGateway",
-        policy => policy
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader());
-});
+    // CORS để Gateway gọi qua được
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(name: MyAllowSpecificOrigins,
+                                  policy =>
+                                  {
+                                      // Cho phép MỌI domain, headers, và methods
+                                      policy.AllowAnyOrigin()
+                                          .AllowAnyHeader()
+                                          .AllowAnyMethod();
+                                  });
+    });
 
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
     // Đăng ký Repository và Service
